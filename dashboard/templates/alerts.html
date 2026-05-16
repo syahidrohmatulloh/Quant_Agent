@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Alerts</title><link rel="stylesheet" href="/static/dashboard.css"></head>
+<body>
+    <h1>Alerts</h1>
+    {% if alerts %}
+    <table>
+        <tr><th>Severity</th><th>Category</th><th>Message</th><th>Time</th></tr>
+        {% for a in alerts %}
+        <tr><td>{{ a.level }}</td><td>{{ a.category }}</td><td>{{ a.message }}</td><td>{{ a.timestamp }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No active alerts.</p>
+    {% endif %}
+    <a href="/dashboard/">Back</a>
+</body>
+</html>

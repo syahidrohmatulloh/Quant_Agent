@@ -1,0 +1,24 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Quant Platform Dashboard</title>
+    <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+    <h1>Quant Platform Dashboard</h1>
+    <div class="status-box">
+        <p><strong>Mode:</strong> {{ mode }}</p>
+        <p><strong>Health:</strong> {{ health }}</p>
+        <p><strong>Time:</strong> {{ time }}</p>
+        <p><strong>Uptime:</strong> {{ uptime }}</p>
+    </div>
+    <nav>
+        <a href="/dashboard/positions">Positions</a>
+        <a href="/dashboard/signals">Signals</a>
+        <a href="/dashboard/alerts">Alerts</a>
+        <a href="/dashboard/models">Models</a>
+        <a href="/dashboard/backtests">Backtests</a>
+    </nav>
+</body>
+</html>

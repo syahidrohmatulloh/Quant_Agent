@@ -1,0 +1,19 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Backtests</title><link rel="stylesheet" href="/static/dashboard.css"></head>
+<body>
+    <h1>Backtests</h1>
+    {% if reports %}
+    <table>
+        <tr><th>Name</th><th>Trades</th><th>Sharpe</th><th>Max DD</th></tr>
+        {% for r in reports %}
+        <tr><td>{{ r.name }}</td><td>{{ r.trades }}</td><td>{{ r.sharpe }}</td><td>{{ r.max_drawdown }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No backtest reports.</p>
+    {% endif %}
+    <a href="/dashboard/">Back</a>
+</body>
+</html>

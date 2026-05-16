@@ -1,0 +1,37 @@
+
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - ../.env
+    volumes:
+      - quant_data:/app/data
+      - ../reports:/app/reports
+    environment:
+      - QUANT_MODE=paper
+      - QUANT_BROKER=paper
+      - QUANT_SQLITE_PATH=/app/data/quant_platform.db
+      - AUDIT_JSONL_PATH=/app/data/audit.jsonl
+    restart: unless-stopped
+
+  # Uncomment to enable PostgreSQL (optional)
+  # postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_USER: quant
+  #     POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+  #     POSTGRES_DB: quant_platform
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   profiles:
+  #     - postgres
+
+volumes:
+  quant_data:
+  # postgres_data:

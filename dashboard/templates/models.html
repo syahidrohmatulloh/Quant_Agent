@@ -1,0 +1,21 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Models</title><link rel="stylesheet" href="/static/dashboard.css"></head>
+<body>
+    <h1>Models</h1>
+    <h2>Approved</h2>
+    {% if approved %}
+    <ul>{% for m in approved %}<li>{{ m.model_id }} ({{ m.model_version }})</li>{% endfor %}</ul>
+    {% else %}<p>No approved models.</p>{% endif %}
+    <h2>Candidate</h2>
+    {% if candidate %}
+    <ul>{% for m in candidate %}<li>{{ m.model_id }}</li>{% endfor %}</ul>
+    {% else %}<p>No candidate models.</p>{% endif %}
+    <h2>Rejected / Archived</h2>
+    {% if rejected %}
+    <ul>{% for m in rejected %}<li>{{ m.model_id }}</li>{% endfor %}</ul>
+    {% else %}<p>No rejected/archived models.</p>{% endif %}
+    <a href="/dashboard/">Back</a>
+</body>
+</html>

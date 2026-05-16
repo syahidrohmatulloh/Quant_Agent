@@ -1,0 +1,20 @@
+
+<!DOCTYPE html>
+<html>
+<head><title>Positions</title><link rel="stylesheet" href="/static/dashboard.css"></head>
+<body>
+    <h1>Paper Positions</h1>
+    <p>Total PnL: {{ pnl }}</p>
+    {% if positions %}
+    <table>
+        <tr><th>Symbol</th><th>Direction</th><th>Volume</th><th>Entry</th><th>Current</th></tr>
+        {% for p in positions %}
+        <tr><td>{{ p.symbol }}</td><td>{{ p.direction }}</td><td>{{ p.volume }}</td><td>{{ p.entry_price }}</td><td>{{ p.current_price }}</td></tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>No open positions.</p>
+    {% endif %}
+    <a href="/dashboard/">Back</a>
+</body>
+</html>
