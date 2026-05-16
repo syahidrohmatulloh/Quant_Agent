@@ -1,0 +1,21 @@
+{
+  "session_id": "demo-session-001",
+  "broker": {
+    "broker_name": "oanda",
+    "environment": "practice",
+    "api_key_env": "OANDA_API_KEY",
+    "api_secret_env": "OANDA_API_SECRET",
+    "account_id_env": "OANDA_ACCOUNT_ID",
+    "base_url": "https://api-fxpractice.oanda.com",
+    "paper_only": true,
+    "allow_order_submission": false,
+    "allow_live_orders": false,
+    "market_data_enabled": true,
+    "account_snapshot_enabled": true
+  },
+  "symbol": "EURUSD",
+  "cycles": 100,
+  "output_dir": "reports/live_session_001/",
+  "confidence_threshold": 0.5,
+  "max_spread": 0.01
+}

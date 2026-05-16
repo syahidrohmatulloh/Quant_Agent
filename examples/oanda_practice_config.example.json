@@ -1,0 +1,15 @@
+{
+  "broker_name": "oanda",
+  "environment": "practice",
+  "api_key_env": "OANDA_API_KEY",
+  "api_secret_env": "OANDA_API_SECRET",
+  "account_id_env": "OANDA_ACCOUNT_ID",
+  "base_url": "https://api-fxpractice.oanda.com",
+  "paper_only": true,
+  "allow_order_submission": false,
+  "allow_live_orders": false,
+  "market_data_enabled": true,
+  "account_snapshot_enabled": true,
+  "max_reconnect_attempts": 5,
+  "request_timeout_seconds": 30
+}

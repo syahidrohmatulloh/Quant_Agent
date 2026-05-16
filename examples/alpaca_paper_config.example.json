@@ -1,0 +1,14 @@
+{
+  "broker_name": "alpaca",
+  "environment": "paper",
+  "api_key_env": "ALPACA_API_KEY",
+  "api_secret_env": "ALPACA_API_SECRET",
+  "base_url": "https://paper-api.alpaca.markets",
+  "paper_only": true,
+  "allow_order_submission": false,
+  "allow_live_orders": false,
+  "market_data_enabled": true,
+  "account_snapshot_enabled": true,
+  "max_reconnect_attempts": 5,
+  "request_timeout_seconds": 30
+}
