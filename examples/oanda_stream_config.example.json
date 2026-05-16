@@ -1,0 +1,20 @@
+{
+  "broker": {
+    "broker_name": "oanda",
+    "environment": "practice",
+    "api_key_env": "OANDA_API_KEY",
+    "account_id_env": "OANDA_ACCOUNT_ID",
+    "base_url": "https://api-fxpractice.oanda.com",
+    "stream_url": "https://stream-fxpractice.oanda.com",
+    "paper_only": true,
+    "allow_order_submission": false,
+    "allow_live_orders": false
+  },
+  "symbols": ["EUR_USD", "GBP_USD", "USD_JPY"],
+  "poll_interval_seconds": 5,
+  "max_events": 100,
+  "stale_after_seconds": 30,
+  "max_spread": 0.01,
+  "output_dir": "reports/oanda_stream/",
+  "mock_by_default": true
+}
