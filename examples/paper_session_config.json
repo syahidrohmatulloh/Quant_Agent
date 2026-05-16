@@ -1,0 +1,25 @@
+{
+  "model": {
+    "model_id": "demo-approved-model-001",
+    "model_version": "v1",
+    "dataset_id": "fx-demo-ds-001",
+    "feature_set_id": "sma_v1",
+    "label_config": {"horizon": 10},
+    "training_period": "2023-01-01/2023-06-01",
+    "validation_period": "2023-06-01/2023-09-01",
+    "test_period": "2023-09-01/2023-12-01",
+    "metrics": {"accuracy": 0.55, "sharpe": 0.8},
+    "artifact_path": "",
+    "approval_status": "approved",
+    "approved_by": "demo-operator",
+    "approval_notes": "Approved for paper trading demo"
+  },
+  "starting_balance": 100000.0,
+  "symbols": ["EURUSD"],
+  "timeframe": "1m",
+  "min_confidence": 0.5,
+  "signal_loop": {
+    "max_signals_per_minute": 10,
+    "circuit_breaker": false
+  }
+}

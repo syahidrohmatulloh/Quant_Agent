@@ -1,0 +1,5 @@
+# Example dashboard environment variables (no real credentials)
+DASHBOARD_AUTH_DISABLED=false
+QUANT_VIEWER_TOKEN=replace_with_64_hex_chars
+QUANT_OPERATOR_TOKEN=replace_with_64_hex_chars
+QUANT_ADMIN_TOKEN=replace_with_64_hex_chars

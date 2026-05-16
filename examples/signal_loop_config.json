@@ -1,0 +1,7 @@
+{
+  "max_signals_per_minute": 10,
+  "circuit_breaker": false,
+  "min_confidence": 0.5,
+  "symbols": ["EURUSD"],
+  "timeframe": "1m"
+}
