@@ -1,0 +1,40 @@
+{
+  "name": "daily_fx_research_analytics",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "data_dir": "data/market",
+  "experiment_result_dir": "reports/experiments",
+  "paper_portfolio_dir": "reports/paper_portfolio",
+  "output_dir": "reports/research_analytics",
+  "dashboard_output": "reports/dashboard/research_analytics/latest.json",
+  "datasets": [
+    {
+      "symbol": "EURUSD",
+      "timeframe": "H1",
+      "csv": "data/market/mt5_EURUSD_H1.csv"
+    }
+  ],
+  "strategies": [
+    "ma_crossover",
+    "time_series_momentum",
+    "rsi_mean_reversion"
+  ],
+  "analytics": {
+    "performance": true,
+    "drawdown": true,
+    "signal_quality": true,
+    "regime_attribution": true,
+    "stability": true
+  },
+  "regime": {
+    "volatility_window": 20,
+    "trend_window": 20,
+    "volatility_threshold_high": 0.015,
+    "volatility_threshold_low": 0.005
+  },
+  "stability": {
+    "rolling_window": 20,
+    "min_periods": 10
+  }
+}
