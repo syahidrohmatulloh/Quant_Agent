@@ -1,0 +1,36 @@
+{
+  "name": "mt5_fx_h1_import",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "raw_input_dir": "data/raw_imports",
+  "market_data_dir": "data/market",
+  "backup_dir": "data/market_versions",
+  "import_log_path": "reports/data_manager/import_log.jsonl",
+  "datasets": [
+    {
+      "source": "mt5",
+      "symbol": "EURUSD",
+      "timeframe": "H1",
+      "raw_csv": "data/raw_imports/EURUSD_H1_raw.csv",
+      "target_csv": "data/market/mt5_EURUSD_H1.csv"
+    }
+  ],
+  "cleaning": {
+    "remove_duplicate_timestamps": true,
+    "sort_by_timestamp": true,
+    "drop_malformed_rows": true,
+    "drop_non_positive_prices": true,
+    "fix_column_aliases": true
+  },
+  "merge": {
+    "mode": "upsert_by_timestamp",
+    "backup_before_write": true,
+    "preserve_existing_if_new_invalid": true
+  },
+  "quality": {
+    "minimum_rows": 20,
+    "warn_on_gaps": true,
+    "warn_on_future_timestamps": true
+  }
+}
