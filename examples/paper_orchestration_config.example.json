@@ -1,0 +1,26 @@
+{
+  "name": "daily_fx_paper_workflow",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "experiment_config": "examples/strategy_experiment_config.example.json",
+  "portfolio_state_path": "reports/paper_portfolio/state.json",
+  "decision_log_path": "reports/paper_portfolio/decisions.jsonl",
+  "audit_log_path": "reports/paper_portfolio/audit.jsonl",
+  "dashboard_output_path": "reports/dashboard/paper_orchestration/latest.json",
+  "daily_report_output": "reports/experiments/daily_paper_workflow_report.md",
+  "cash_simulated": 100000.0,
+  "risk": {
+    "max_symbol_weight": 0.25,
+    "max_total_gross_exposure": 1.0,
+    "max_daily_loss_pct": 2.0,
+    "max_new_decisions_per_run": 10,
+    "allow_short": true,
+    "conflict_action": "neutral"
+  },
+  "decision_policy": {
+    "minimum_consensus_confidence": "medium",
+    "allow_low_confidence": false,
+    "neutral_on_conflict": true
+  }
+}
