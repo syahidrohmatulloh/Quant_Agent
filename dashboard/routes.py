@@ -1,0 +1,108 @@
+"""
+Phase 14 dashboard routes.
+FastAPI router with all read-only dashboard pages.
+No live trading. No order submission. No broker calls.
+"""
+from fastapi import APIRouter, Request, HTTPException, Query
+from fastapi.responses import HTMLResponse, JSONResponse
+
+from dashboard.data_access import (
+    list_datasets,
+    get_dataset_detail,
+    list_experiment_configs,
+    get_experiment_config_preview,
+    list_experiment_history,
+    get_latest_dashboard_json,
+    list_reports,
+    get_report_detail,
+    get_home_status,
+)
+from dashboard.templates import (
+    render_home,
+    render_datasets,
+    render_dataset_detail,
+    render_experiment_configs,
+    render_experiment_run_preview,
+    render_experiment_history,
+    render_latest_dashboard,
+    render_reports,
+    render_report_detail,
+)
+from dashboard.safety import safe_dataset_id, safe_report_id
+
+router = APIRouter()
+
+
+@router.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    status = get_home_status()
+    return HTMLResponse(content=render_home(status))
+
+
+@router.get("/datasets", response_class=HTMLResponse)
+async def datasets(request: Request):
+    datasets = list_datasets()
+    return HTMLResponse(content=render_datasets(datasets))
+
+
+@router.get("/datasets/{dataset_id}", response_class=HTMLResponse)
+async def dataset_detail(request: Request, dataset_id: str):
+    safe_id = safe_dataset_id(dataset_id)
+    vm = get_dataset_detail(safe_id)
+    if vm is None:
+        raise HTTPException(status_code=404, detail="Dataset not found")
+    return HTMLResponse(content=render_dataset_detail(vm))
+
+
+@router.get("/experiments/configs", response_class=HTMLResponse)
+async def experiment_configs(request: Request):
+    configs = list_experiment_configs()
+    return HTMLResponse(content=render_experiment_configs(configs))
+
+
+@router.get("/experiments/run", response_class=HTMLResponse)
+async def experiment_run(request: Request, config: str = Query(...)):
+    try:
+        preview = get_experiment_config_preview(config)
+    except PermissionError as e:
+        raise HTTPException(status_code=403, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Config error: {e}")
+    return HTMLResponse(content=render_experiment_run_preview(preview, config))
+
+
+@router.get("/experiments/history", response_class=HTMLResponse)
+async def experiment_history(request: Request):
+    history = list_experiment_history()
+    return HTMLResponse(content=render_experiment_history(history))
+
+
+@router.get("/dashboard/latest", response_class=HTMLResponse)
+async def latest_dashboard(request: Request):
+    data = get_latest_dashboard_json()
+    return HTMLResponse(content=render_latest_dashboard(data))
+
+
+@router.get("/reports", response_class=HTMLResponse)
+async def reports(request: Request):
+    reports = list_reports()
+    return HTMLResponse(content=render_reports(reports))
+
+
+@router.get("/reports/{report_id}", response_class=HTMLResponse)
+async def report_detail(request: Request, report_id: str):
+    safe_id = safe_report_id(report_id)
+    content = get_report_detail(safe_id)
+    if content is None:
+        raise HTTPException(status_code=404, detail="Report not found")
+    return HTMLResponse(content=render_report_detail(safe_id, content))
+
+
+@router.get("/health")
+async def health():
+    return JSONResponse(content={
+        "ok": True,
+        "paper_only": True,
+        "data_only": True,
+        "no_order_submission": True,
+    })
