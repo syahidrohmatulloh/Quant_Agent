@@ -1,0 +1,42 @@
+{
+  "name": "daily_fx_paper_simulator",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "initial_cash": 100000.0,
+  "base_currency": "USD",
+  "market_data_dir": "data/market",
+  "paper_decision_log": "reports/paper_portfolio/decisions.jsonl",
+  "portfolio_state_path": "reports/paper_simulator/state.json",
+  "trade_log_path": "reports/paper_simulator/trades.jsonl",
+  "pnl_log_path": "reports/paper_simulator/pnl.jsonl",
+  "report_output": "reports/paper_simulator/paper_simulator_report.md",
+  "dashboard_output": "reports/dashboard/paper_simulator/latest.json",
+  "symbols": [
+    {
+      "symbol": "EURUSD",
+      "timeframe": "H1",
+      "csv": "data/market/mt5_EURUSD_H1.csv",
+      "pip_size": 0.0001,
+      "contract_size": 100000,
+      "quote_currency": "USD"
+    }
+  ],
+  "execution": {
+    "fill_price": "next_close",
+    "allow_partial_fill": false,
+    "max_fill_delay_bars": 1
+  },
+  "costs": {
+    "spread_pips": 1.0,
+    "slippage_pips": 0.2,
+    "commission_per_million": 30.0,
+    "min_commission": 0.0
+  },
+  "risk": {
+    "max_symbol_weight": 0.25,
+    "max_total_gross_exposure": 1.0,
+    "allow_short": true,
+    "max_notional_per_symbol": 25000.0
+  }
+}
