@@ -20,6 +20,14 @@
       "pip_size": 0.0001,
       "contract_size": 100000,
       "quote_currency": "USD"
+    },
+    {
+      "symbol": "GBPUSD",
+      "timeframe": "H1",
+      "csv": "data/market/mt5_GBPUSD_H1.csv",
+      "pip_size": 0.0001,
+      "contract_size": 100000,
+      "quote_currency": "USD"
     }
   ],
   "execution": {

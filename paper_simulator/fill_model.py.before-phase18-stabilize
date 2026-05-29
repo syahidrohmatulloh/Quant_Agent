@@ -122,8 +122,6 @@ def simulate_fill(
 
     if hasattr(costs, "to_dict"):
         c = costs.to_dict()
-    elif hasattr(costs, "__dict__"):
-        c = dict(costs.__dict__)
     else:
         c = dict(costs)
 

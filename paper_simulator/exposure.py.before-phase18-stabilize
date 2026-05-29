@@ -73,7 +73,7 @@ def compute_exposure(
             warnings.append("No recent price data for " + pos.symbol + "; exposure may be stale.")
             continue
 
-        notional = pos.quantity * price * DEFAULT_CONTRACT_SIZE * DEFAULT_CONTRACT_SIZE
+        notional = pos.quantity * price * DEFAULT_CONTRACT_SIZE
         if pos.side == "LONG":
             long_exp += notional
             net += notional

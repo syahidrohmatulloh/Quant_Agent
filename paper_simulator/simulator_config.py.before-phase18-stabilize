@@ -69,6 +69,7 @@ def validate_simulator_config(
         errors.append("data_only must be true.")
     if config.get("no_order_submission") is not True:
         errors.append("no_order_submission must be true.")
+
     if config.get("live_trading") is True:
         errors.append("live_trading must not be true. No live trading allowed.")
 
@@ -76,7 +77,7 @@ def validate_simulator_config(
     _scan_for_order_execution(config, errors, path_prefix="")
 
     symbols = config.get("symbols", [])
-    if not isinstance(symbols, list) or not symbols:
+    if not isinstance(symbols, list) or len(symbols) == 0:
         errors.append("symbols must be a non-empty list.")
     else:
         for idx, sym in enumerate(symbols):
@@ -132,6 +133,16 @@ def validate_simulator_config(
         fill_price = execution.get("fill_price")
         if fill_price not in ("next_close", "current_close", "midpoint_close", None):
             errors.append("execution.fill_price must be one of: next_close, current_close, midpoint_close.")
+
+        allow_partial = execution.get("allow_partial_fill")
+        if allow_partial is not None and not isinstance(allow_partial, bool):
+            errors.append("execution.allow_partial_fill must be a boolean.")
+
+        max_delay = execution.get("max_fill_delay_bars")
+        if max_delay is not None and (
+            not isinstance(max_delay, int) or max_delay < 0 or max_delay > 10
+        ):
+            errors.append("execution.max_fill_delay_bars must be an integer in [0, 10].")
 
     costs = config.get("costs", {})
     if costs:
