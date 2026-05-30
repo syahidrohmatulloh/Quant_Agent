@@ -1,0 +1,44 @@
+{
+  "name": "daily_fx_paper_briefing",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "sources": {
+    "experiment_dashboard": "reports/dashboard/experiments/latest.json",
+    "paper_orchestration_dashboard": "reports/dashboard/paper_orchestration/latest.json",
+    "paper_simulator_dashboard": "reports/dashboard/paper_simulator/latest.json",
+    "paper_simulator_state": "reports/paper_simulator/state.json",
+    "paper_simulator_pnl": "reports/paper_simulator/pnl.jsonl",
+    "research_analytics_dashboard": "reports/dashboard/research_analytics/latest.json",
+    "data_manager_catalog": "reports/data_manager/dataset_catalog.json",
+    "data_manager_import_log": "reports/data_manager/import_log.jsonl"
+  },
+  "outputs": {
+    "briefing_markdown": "reports/briefing/daily_briefing.md",
+    "briefing_json": "reports/briefing/daily_briefing.json",
+    "alert_summary_json": "reports/briefing/alert_summary.json",
+    "email_text": "reports/briefing/email_briefing.txt",
+    "telegram_text": "reports/briefing/telegram_briefing.txt",
+    "dashboard_json": "reports/dashboard/briefing/latest.json",
+    "briefing_log": "reports/briefing/briefing_log.jsonl"
+  },
+  "alert_rules": {
+    "alert_on_signal_change": true,
+    "alert_on_new_paper_position": true,
+    "alert_on_exposure_warning": true,
+    "alert_on_data_quality_warning": true,
+    "alert_on_negative_simulated_pnl": true,
+    "alert_on_large_drawdown": true,
+    "alert_on_missing_sources": true,
+    "simulated_pnl_warning_threshold": -500.0,
+    "drawdown_warning_threshold_pct": -5.0,
+    "max_alerts_per_briefing": 20
+  },
+  "message": {
+    "timezone": "Asia/Jakarta",
+    "tone": "professional",
+    "include_disclaimer": true,
+    "include_next_steps": true,
+    "max_telegram_chars": 3500
+  }
+}
