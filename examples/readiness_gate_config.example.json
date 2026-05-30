@@ -1,0 +1,70 @@
+{
+  "name": "quant_agent_mvp_readiness_gate",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "project_root": ".",
+  "scan": {
+    "include_dirs": [
+      "strategies",
+      "strategy_lab",
+      "market_data",
+      "strategy_runtime",
+      "experiment_manager",
+      "dashboard",
+      "paper_orchestration",
+      "data_manager",
+      "research_analytics",
+      "paper_simulator",
+      "briefing",
+      "local_app",
+      "tools",
+      "tests",
+      "examples"
+    ],
+    "exclude_dirs": [
+      ".git",
+      "venv",
+      "__pycache__",
+      ".pytest_cache",
+      "reports",
+      "logs",
+      "data/market",
+      "local_configs"
+    ]
+  },
+  "required_phases": [
+    "phase-10",
+    "phase-11",
+    "phase-12",
+    "phase-13",
+    "phase-14",
+    "phase-15",
+    "phase-16",
+    "phase-17",
+    "phase-18",
+    "phase-19",
+    "phase-20"
+  ],
+  "required_outputs": [
+    "examples/local_app_config.example.json",
+    "examples/briefing_config.example.json",
+    "examples/paper_simulator_config.example.json"
+  ],
+  "audit_rules": {
+    "require_paper_only_disclaimers": true,
+    "forbid_live_order_execution": true,
+    "forbid_credentials": true,
+    "forbid_external_network_in_tests": true,
+    "require_confirm_for_restore": true,
+    "require_confirm_for_cleanup": true,
+    "require_dashboard_localhost": true,
+    "require_no_generated_outputs_in_repo": true
+  },
+  "outputs": {
+    "readiness_report_md": "reports/readiness_gate/readiness_report.md",
+    "readiness_report_json": "reports/readiness_gate/readiness_report.json",
+    "dashboard_json": "reports/dashboard/readiness_gate/latest.json",
+    "readiness_log": "reports/readiness_gate/readiness_log.jsonl"
+  }
+}
