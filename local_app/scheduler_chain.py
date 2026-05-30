@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 
-def generate_daily_command(config: Dict[str, Any], project_root: Path) -> Dict[str, Any]:
+def generate_daily_command(config: Dict[str, Any], project_root: Path, local_app_config_path: str = 'examples/local_app_config.example.json') -> Dict[str, Any]:
     scheduler = config.get("scheduler", {})
     default_log = scheduler.get("default_log", "logs/daily_quant_agent_workflow.log")
     suggested_time = scheduler.get("suggested_time", "07:00")
@@ -29,7 +29,7 @@ def generate_daily_command(config: Dict[str, Any], project_root: Path) -> Dict[s
     if " " in project_root_str:
         project_root_str = f'"{project_root_str}"'
 
-    config_path = config.get("configs", {}).get("briefing", "examples/local_app_config.example.json")
+    config_path = local_app_config_path
 
     command = (
         f"cd {project_root_str} && "

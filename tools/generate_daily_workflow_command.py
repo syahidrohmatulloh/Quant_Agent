@@ -39,7 +39,7 @@ def main():
         sys.exit(1)
 
     project_root = Path(args.project_root).resolve()
-    result = generate_daily_command(config, project_root)
+    result = generate_daily_command(config, project_root, args.config)
 
     print("Suggested daily workflow command:")
     print(result["command"])
