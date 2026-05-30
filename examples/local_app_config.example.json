@@ -1,0 +1,49 @@
+{
+  "name": "quant_agent_local_app",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "project_root": ".",
+  "directories": {
+    "logs": "logs",
+    "reports": "reports",
+    "dashboard": "reports/dashboard",
+    "briefing": "reports/briefing",
+    "paper_simulator": "reports/paper_simulator",
+    "paper_portfolio": "reports/paper_portfolio",
+    "data_manager": "reports/data_manager",
+    "research_analytics": "reports/research_analytics",
+    "backups": "backups/local_configs"
+  },
+  "configs": {
+    "briefing": "examples/briefing_config.example.json",
+    "paper_simulator": "examples/paper_simulator_config.example.json",
+    "paper_orchestration": "examples/paper_orchestration_config.example.json",
+    "research_analytics": "examples/research_analytics_config.example.json",
+    "data_import": "examples/market_data_import_config.example.json"
+  },
+  "workflow": {
+    "run_data_import": false,
+    "run_research_analytics": false,
+    "run_paper_orchestration": true,
+    "run_paper_simulator": true,
+    "run_briefing": true,
+    "continue_on_warning": true
+  },
+  "dashboard": {
+    "host": "127.0.0.1",
+    "port": 8000,
+    "auto_open_browser": false
+  },
+  "cleanup": {
+    "allow_delete_generated_reports": false,
+    "allow_delete_logs": false,
+    "allow_delete_dashboard_outputs": false,
+    "require_confirm_cleanup": true
+  },
+  "scheduler": {
+    "default_log": "logs/daily_quant_agent_workflow.log",
+    "suggested_time": "07:00",
+    "timezone": "Asia/Jakarta"
+  }
+}
