@@ -1,107 +1,123 @@
-# Quant Platform v3
+# Quant_Agent
 
-Event-driven backtester + paper trading foundation.
+**Paper-Only / Data-Only Quantitative Research Assistant**
 
-## Phases
-- 1.5/2.5: SQLite, audit, auth, paper broker, risk, CLI tools
-- 3: Event-driven backtester, execution simulator, performance metrics, walk-forward testing
+> **IMPORTANT:** Quant_Agent is strictly paper-only and data-only. It does not perform live trading, does not submit real-money orders, and does not connect to broker execution. It is not financial advice and does not guarantee performance. The readiness gate explicitly does not approve or enable live trading.
 
-## Run Tests
-```bash
-python -m pytest tests/ -v
-```
+## Overview
 
-## Run Backtest
-```bash
-python tools/run_backtest.py --config backtest_config.json --data historical_data.json --output reports/
-```
+Quant_Agent is a modular Python project for quantitative strategy research, backtesting, and paper-trading simulation. It is designed for local use on macOS with a zsh terminal and Python virtual environment.
 
+## What Quant_Agent Does
 
-**Phase 3 test suite passed locally/sandbox: 75 passed.**
+- Strategy library with institutional-style signal generation
+- CSV market data workflow and validation
+- MetaTrader 5 market data integration (CSV export)
+- Strategy experiment manager for parameter sweeps
+- Local quant dashboard for visualizing results
+- Paper trading orchestration and simulation
+- Dataset manager for real market data imports
+- Research analytics and attribution
+- Daily briefing generation
+- Readiness gate and safety audit
+- One-command local app launcher
 
+## What Quant_Agent Does NOT Do
 
-## Phase 4 — Research Pipeline + Model Governance
+- Live trading or real-money order submission
+- Broker execution or order sending
+- Real-time market data streaming (uses CSV files)
+- Financial advice or profitability guarantees
+- Cloud deployment (local-only by default)
+- Credential storage or secret management
 
-**Status:** Complete  
-**Test suite passed locally/sandbox: 107 passed (75 baseline + 32 new).**
+## Main Capabilities by Phase
 
-### New Modules
-- `research_pipeline/` — DatasetBuilder, FeatureRegistry, FeatureEngineering, LabelBuilder, TrainTestSplit, ModelTrainer, ModelEvaluator, ModelRegistry, ModelGovernance, DriftMonitor, ExperimentTracker
-- `model_governance/` — ApprovalWorkflow, ModelCard, ChampionChallenger, Rollback
-- `tests/research/` — 32 new tests covering dataset building, features, labels, splits, registry, governance, drift
-- `tools/` — build_dataset.py, train_model.py, evaluate_model.py, register_model.py, approve_model.py, check_drift.py
+| Phase | Capability |
+|-------|-----------|
+| Phase 6 | Baseline architecture and tests |
+| Phase 7 | Runtime validation and safety |
+| Phase 8 | Broker integration (paper-only adapters) |
+| Phase 9 | OANDA practice transport and dry-run safety |
+| Phase 10 | Institutional-style strategy library |
+| Phase 11 | MetaTrader 5 market data integration |
+| Phase 12 | Real market CSV workflow and strategy runtime |
+| Phase 13 | Strategy experiment manager |
+| Phase 14 | Local quant dashboard UI |
+| Phase 15 | Paper trading orchestration |
+| Phase 16 | Real market data import and dataset manager |
+| Phase 17 | Research analytics and attribution |
+| Phase 18 | Paper portfolio simulator v2 |
+| Phase 19 | Alerting and daily briefing |
+| Phase 20 | Robust local app packaging and launcher |
+| Phase 21 | Live-readiness gate and safety audit |
+| Phase 22 | Documentation, user manual, and demo script |
 
-### Key Design Decisions
-- No live trading automation added.
-- Only `approved` models can generate systematic signals.
-- Simple rule-based mock model used when sklearn unavailable.
-- Time-series splits only — no random shuffle.
-- Triple-barrier labels supported with explicit horizon.
-- Feature drift alerts at 3-sigma threshold.
-
-
-## Phase 5 — Portfolio Optimization + Live Signal Bridge (Paper-Only)
-
-**Status:** Complete  
-**Test suite passed locally/sandbox: 178 passed (107 baseline + 71 new).**  
-**Mode:** Paper-only. No live trading enabled.
-
-### New Modules
-- `portfolio_optimization/` — CovarianceEstimator, CorrelationAnalyzer, VolatilityTargeting, RiskParityAllocator, HRPAllocator, AllocationEngine, Constraints, RebalanceEngine
-- `signal_bridge/` — ApprovedModelLoader, FeatureRuntime, PredictionService, SignalGenerator, SignalRouter, PaperSignalExecutor
-- `monitoring/` — LiveMetrics, Alerting, SignalMonitor, PortfolioMonitor
-- `tests/portfolio/` — 24 tests
-- `tests/signal_bridge/` — 22 tests
-- `tests/monitoring/` — 16 tests
-- `tools/` — run_signal_bridge.py, generate_paper_signal.py, run_portfolio_allocation.py, monitor_paper_signals.py
-
-### Key Design Decisions
-- Only `approved` models can generate signals. Draft/candidate/rejected/archived are blocked.
-- Signal bridge routes exclusively to paper broker. No live broker calls.
-- Circuit breaker and rate limiting protect the system.
-- Every signal is audited: signal_generated → signal_routed_to_paper → paper_order_created.
-- Portfolio allocation respects max weight, gross/net exposure, leverage, and correlation caps.
-- Volatility targeting reduces exposure when realized vol exceeds target.
-- Rebalance engine avoids churn via minimum trade threshold.
-- Monitoring generates alerts for rejection spikes, drawdown, drift, circuit breaker, missing features.
-
-
-## Phase 6 — Live Data, Scheduler, Dashboard, Persistence, Deployment
-
-**Status:** Complete  
-**Test suite passed locally/sandbox: 256 passed (178 baseline + 78 new).**  
-**Mode:** Paper-only. No live trading enabled.
-
-### New Modules
-- `live_data/` — BaseMarketDataAdapter, DataNormalizer, DataQualityMonitor, MarketClock, CSVReplayAdapter, PollingAdapter, MT5PriceAdapter
-- `scheduler/` — TaskScheduler, SignalLoop, RetryPolicy, Heartbeat, JobStore
-- `dashboard/` — FastAPI HTML dashboard (positions, signals, alerts, models, backtests) with auth
-- `persistence/` — ConnectionManager, Repository, SQLiteBackend, PostgresBackend, MigrationRunner
-- `deployment/` — Dockerfile, docker-compose.yml, entrypoint.sh, healthcheck.sh
-- `ops/` — Runbook, incident response, paper trading checklist, backup/restore guide
-- `tests/live_data/` — 24 tests
-- `tests/scheduler/` — 15 tests
-- `tests/dashboard/` — 13 tests
-- `tests/persistence/` — 9 tests
-- `tests/deployment/` — 5 tests
-- `tools/` — run_scheduler.py, run_signal_loop_once.py, replay_market_data.py, check_system_health.py, export_dashboard_snapshot.py, backup_data.py, restore_data.py
-
-### Key Design Decisions
-- Data normalizer validates and standardizes all incoming ticks/bars.
-- Data quality monitor detects stale data, wide spreads, backwards timestamps, duplicate bars.
-- Market clock respects FX weekend (Fri 22:00 UTC – Sun 22:00 UTC).
-- Signal loop is gated by: circuit breaker → market clock → data quality → model approval → feature runtime → confidence → paper execution.
-- Dashboard is auth-protected (viewer token). No secrets exposed in HTML.
-- Persistence layer supports SQLite (default) and PostgreSQL (optional, commented in docker-compose).
-- Migrations are idempotent and versioned.
-- Docker image defaults to paper mode. No secrets baked into image.
-- All 256 tests pass.
-
-### Deployment
+## Quick Start
 
 ```bash
-cd deployment
-docker-compose up --build
+# 1. Clone the repository
+git clone <REPO_URL>
+cd Quant_Agent
+
+# 2. Create and activate virtual environment
+python3 -m venv venv
+source venv/bin/activate
+
+# 3. Install dependencies
+pip install -r requirements.txt
+
+# 4. Run tests
+python3 -m pytest tests/ -q
+
+# 5. Validate local app config
+python3 tools/validate_local_app_config.py --config examples/local_app_config.example.json
+
+# 6. Initialize directories
+python3 tools/init_local_directories.py
+
+# 7. Run local workflow
+python3 tools/run_local_workflow.py --config examples/local_app_config.example.json
+
+# 8. Run readiness audit
+python3 tools/run_readiness_audit.py --config examples/readiness_gate_config.example.json --allow-missing
+
+# 9. Start dashboard
+python3 tools/run_local_dashboard.py --config examples/local_app_config.example.json
+# Open http://127.0.0.1:8000 in your browser
 ```
 
-Access dashboard at http://localhost:8000/dashboard/
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — System design and data flow
+- [Setup](docs/SETUP.md) — Installation and environment setup
+- [Command Cheat Sheet](docs/COMMAND_CHEATSHEET.md) — Common commands
+- [Daily Workflow](docs/DAILY_WORKFLOW.md) — Recommended daily sequence
+- [Dashboard Guide](docs/DASHBOARD_GUIDE.md) — Using the local dashboard
+- [Safety and Limitations](docs/SAFETY_AND_LIMITATIONS.md) — Important safety information
+- [Troubleshooting](docs/TROUBLESHOOTING.md) — Common issues and fixes
+- [Phase History](docs/PHASE_HISTORY.md) — Development timeline
+- [Demo Script](docs/DEMO_SCRIPT.md) — Presentation demo flow
+- [Post-MVP Roadmap](docs/POST_MVP_ROADMAP.md) — Future directions
+
+## Safety
+
+Quant_Agent is a research tool. It simulates trading decisions on historical and CSV-imported data. It does not:
+- Submit orders to brokers
+- Manage real money
+- Provide investment advice
+- Guarantee returns
+
+Before any future live trading discussion, a separate design review, legal/compliance review, security audit, broker sandbox testing, risk kill-switch implementation, manual approval, and independent validation are required.
+
+## Troubleshooting
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for common issues.
+
+## Roadmap
+
+See [docs/POST_MVP_ROADMAP.md](docs/POST_MVP_ROADMAP.md) for future phases.
+
+## License
+
+This project is for educational and research purposes only.
