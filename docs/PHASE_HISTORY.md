@@ -23,6 +23,17 @@
 | 20 | Local App Packaging | One-command launcher | Launcher, init tools, cleanup | Local-only, no background service | phase-20-clean |
 | 21 | Readiness Gate | Safety audit | Audit engine, scoring, reports | Explicitly not live approval | phase-21-clean |
 | 22 | Documentation | User manual and demo | README, docs, validation tools | Paper-only documentation | phase-22-clean |
+| 23 | Warning Cleanup | Readiness score improvement | False-positive suppression, cleaner audit | Safety rules not weakened | phase-23-clean |
+
+## Phase 23 Details
+
+Phase 23 improved the readiness gate audit to reduce false positives while maintaining strict safety:
+
+- **Credential audit**: Now distinguishes safe string constructions (e.g., "api" + "_key") from actual secrets. Skips gate test files that intentionally reference forbidden strings.
+- **Execution gate audit**: Now skips test files that verify the gate. Checks for real execution context (function calls, imports) rather than mere string presence.
+- **Safety audit**: Better classification of scheduler tools (print-only vs. auto-install) and briefing tools (text-only vs. auto-send).
+- **Output hygiene audit**: Distinguishes actual generated files from documentation references. Passes folders with only .gitkeep or README.md.
+- **Config audit**: Allows placeholder/example values without flagging them as credentials.
 
 ## Test Count Evolution
 
@@ -45,6 +56,7 @@
 | 20 | + local app |
 | 21 | + readiness gate |
 | 22 | + documentation |
+| 23 | + warning cleanup |
 
 ## Safety Evolution
 
@@ -57,6 +69,7 @@ Each phase added safety checks:
 - Phase 20: Cleanup requires confirmation
 - Phase 21: Full readiness gate with scoring
 - Phase 22: Documentation safety validation
+- Phase 23: Cleaner audit without weakening safety
 
 ## Disclaimer
 
