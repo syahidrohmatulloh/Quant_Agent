@@ -67,3 +67,35 @@
 - Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
 - All changes remain paper-only / data-only
 - No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+
+## Phase 26
+- Research Insights Dashboard and Strategy Comparison UX
+- Added `research_insights/` module for structured research insight summaries
+  - `insight_builder.py` with `ResearchInsightSummary` and `StrategyInsight` dataclasses
+  - `build_research_insights()` — reads existing local outputs and builds summaries
+  - `classify_strategy_metrics()` — safe paper-only classification logic
+  - `render_research_insights_summary()` — human-readable CLI output
+  - `load_strategy_outputs()` — scans reports/experiments, reports/research_analytics, etc.
+- Added `tools/show_research_insights.py` CLI tool
+- Enhanced `dashboard/routes.py` with `/research-insights` route
+- Enhanced `dashboard/templates.py` with `render_research_insights()` HTML page
+- Added nav links from `/`, `/operator`, and `/action-center` to `/research-insights`
+- Classification values:
+  - `candidate_for_further_paper_testing`
+  - `monitor_in_paper_mode`
+  - `needs_more_data`
+  - `inconclusive`
+  - `weak_paper_metrics`
+- Safety wording enforced:
+  - No buy/sell recommendations
+  - No live trading advice
+  - No profitability guarantees
+  - No capital allocation advice
+- Added tests:
+  - `tests/research/test_phase26_research_insights.py`
+  - `tests/dashboard/test_phase26_research_insights_dashboard.py`
+  - `tests/tools/test_phase26_research_insights_cli.py`
+- Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
+- All changes remain paper-only / data-only
+- No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+- No generated outputs committed

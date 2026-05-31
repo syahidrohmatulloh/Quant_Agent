@@ -1,5 +1,8 @@
 # Command Cheatsheet
 
+## Research Insights (Phase 26)
+- `python3 tools/show_research_insights.py --config examples/research_analytics_config.example.json --allow-missing`
+
 ## Operator Day (Phase 24)
 - `python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing`
 

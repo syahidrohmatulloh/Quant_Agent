@@ -1,8 +1,9 @@
 """
-Phase 14 + 25 dashboard routes.
+Phase 14 + 25 + 26 dashboard routes.
 FastAPI router with all read-only dashboard pages.
 No live trading. No order submission. No broker calls.
 Phase 25: adds /action-center route.
+Phase 26: adds /research-insights route.
 """
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -30,6 +31,7 @@ from dashboard.templates import (
     render_report_detail,
     render_operator_status,
     render_action_center,
+    render_research_insights,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
@@ -125,3 +127,24 @@ def action_center_page(request: Request) -> HTMLResponse:
             pass
     ac = build_operator_action_center(config, project_root, config_path=config_path, allow_missing=True)
     return HTMLResponse(render_action_center(ac))
+
+@router.get("/research-insights", response_class=HTMLResponse)
+def research_insights_page(request: Request) -> HTMLResponse:
+    """Research insights page: strategy comparison, classifications, warnings.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    from dashboard.data_access import get_project_root
+    from local_app.app_config import load_config
+    from research_insights.insight_builder import build_research_insights
+
+    project_root = get_project_root()
+    config_path = project_root / "examples" / "research_analytics_config.example.json"
+    config = {}
+    if config_path.exists():
+        try:
+            config = load_config(config_path)
+        except Exception:
+            pass
+    summary = build_research_insights(project_root, config=config, allow_missing=True)
+    return HTMLResponse(render_research_insights(summary))
