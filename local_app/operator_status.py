@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+
 @dataclass
 class OperatorStatus:
     mode: str = "paper-only / data-only"
@@ -29,6 +30,8 @@ class OperatorStatus:
     briefing_status: str = "not found"
     latest_dashboard_path: Optional[str] = None
     dashboard_status: str = "not found"
+    latest_paper_runtime_session_path: Optional[str] = None
+    paper_runtime_status: str = "not found"
     generated_output_paths: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
     blockers: List[str] = field(default_factory=list)
@@ -40,7 +43,9 @@ class OperatorStatus:
     workflow_action_items: List[str] = field(default_factory=list)
     briefing_action_items: List[str] = field(default_factory=list)
     dashboard_action_items: List[str] = field(default_factory=list)
+    paper_runtime_action_items: List[str] = field(default_factory=list)
     latest_operator_run: Optional[str] = None
+
 
 def _read_json(path: Path) -> Optional[Dict[str, Any]]:
     if not path.exists():
@@ -51,11 +56,13 @@ def _read_json(path: Path) -> Optional[Dict[str, Any]]:
     except Exception:
         return None
 
+
 def _find_latest_file(parent: Path, pattern: str = "*") -> Optional[Path]:
     if not parent.exists():
         return None
     files = sorted(parent.glob(pattern), key=lambda p: p.stat().st_mtime, reverse=True)
     return files[0] if files else None
+
 
 def build_operator_status(
     config: Dict[str, Any],
@@ -123,6 +130,19 @@ def build_operator_status(
         status.dashboard_status = "not found"
         status.warnings.append("No dashboard export found.")
 
+    # Paper runtime session
+    paper_runtime_dir = reports_dir / "paper_runtime"
+    latest_session_json = paper_runtime_dir / "latest_session.json"
+    if latest_session_json.exists():
+        status.latest_paper_runtime_session_path = str(latest_session_json.relative_to(project_root))
+        status.paper_runtime_status = "available"
+    else:
+        status.paper_runtime_status = "not found"
+        status.warnings.append("No paper runtime session found.")
+        status.paper_runtime_action_items.append(
+            "Run: python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing --write-journal"
+        )
+
     # Health check
     health_json = reports_dir / "local_app" / "health_check.json"
     if health_json.exists():
@@ -139,6 +159,9 @@ def build_operator_status(
     md_path = reports_dir / "readiness_gate" / "readiness_report.md"
     if md_path.exists():
         status.generated_output_paths.append(str(md_path.relative_to(project_root)))
+
+    if latest_session_json.exists():
+        status.generated_output_paths.append(str(latest_session_json.relative_to(project_root)))
 
     # Next safe commands
     dashboard_cfg = config.get("dashboard", {})
@@ -188,6 +211,7 @@ def build_operator_status(
 
     return status
 
+
 def render_operator_summary(status: OperatorStatus) -> str:
     lines = [
         "",
@@ -221,6 +245,11 @@ def render_operator_summary(status: OperatorStatus) -> str:
     lines.append(f" Dashboard: {status.dashboard_status}")
     if status.latest_dashboard_path:
         lines.append(f" Path: {status.latest_dashboard_path}")
+    lines.append("")
+
+    lines.append(f" Paper Runtime: {status.paper_runtime_status}")
+    if status.latest_paper_runtime_session_path:
+        lines.append(f" Path: {status.latest_paper_runtime_session_path}")
     lines.append("")
 
     if status.generated_output_paths:

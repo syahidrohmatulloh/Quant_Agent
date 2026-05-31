@@ -1,1 +1,1 @@
-"""Paper runtime - live paper session management."""
+"""Paper runtime session journal module."""

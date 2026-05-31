@@ -99,3 +99,38 @@
 - All changes remain paper-only / data-only
 - No live trading, no order submission, no broker calls, no email/Telegram send, no cron
 - No generated outputs committed
+
+## Phase 27
+- Paper Runtime Monitoring and Session Journal
+- Added `paper_runtime/session_journal.py` module for local paper-runtime session tracking
+  - `PaperRuntimeSession` dataclass — captures workflow status, signals, decisions, portfolio, PnL, exposure, risk warnings
+  - `PaperRuntimeJournal` dataclass — aggregates sessions with counts and paths
+  - `build_paper_runtime_session()` — reads existing local outputs and builds session
+  - `build_paper_runtime_journal()` — builds journal from sessions
+  - `write_paper_runtime_journal()` — writes JSONL, latest JSON, and Markdown summaries
+  - `render_paper_runtime_summary()` — human-readable CLI output with safety disclaimers
+  - `load_latest_paper_runtime_session()` — loads latest session from disk
+- Added `tools/show_paper_runtime_journal.py` CLI tool
+  - `--allow-missing` tolerates missing optional outputs
+  - `--write-journal` writes outputs to `reports/paper_runtime/`
+  - Returns 0 if no critical blockers, non-zero only for config/safety failure
+- Enhanced `dashboard/routes.py` with `/paper-runtime` route
+- Enhanced `dashboard/templates.py` with `render_paper_runtime()` HTML page
+- Added nav links from `/`, `/operator`, `/action-center`, `/research-insights` to `/paper-runtime`
+- Enhanced `local_app/action_center.py` with paper runtime action items and latest session path
+- Enhanced `local_app/operator_status.py` with paper runtime status and path
+- Safety wording enforced throughout:
+  - PAPER-ONLY / DATA-ONLY on every output
+  - No live trading
+  - No order submission
+  - Not financial advice
+  - Does not approve or enable live trading
+  - Does not guarantee performance
+- Added tests:
+  - `tests/paper_runtime/test_phase27_session_journal.py`
+  - `tests/dashboard/test_phase27_paper_runtime_dashboard.py`
+  - `tests/tools/test_phase27_paper_runtime_cli.py`
+- Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
+- All changes remain paper-only / data-only
+- No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+- No generated outputs committed

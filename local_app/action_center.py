@@ -31,12 +31,14 @@ class ActionCenter:
     workflow_action_items: List[str] = field(default_factory=list)
     briefing_action_items: List[str] = field(default_factory=list)
     dashboard_action_items: List[str] = field(default_factory=list)
+    paper_runtime_action_items: List[str] = field(default_factory=list)
     generated_outputs: List[str] = field(default_factory=list)
     next_safe_commands: List[str] = field(default_factory=list)
     overall: str = "unknown"
     readiness_score: Optional[int] = None
     readiness_grade: Optional[str] = None
     readiness_status: Optional[str] = None
+    latest_paper_runtime_session_path: Optional[str] = None
     disclaimer: str = (
         "This does not approve or enable live trading. "
         "No broker calls. No live network. No credential prompts. "
@@ -158,7 +160,7 @@ def build_operator_action_center(
     else:
         if not allow_missing:
             ac.warnings.append("No workflow summary found. Run workflow first.")
-            ac.workflow_action_items.append("Run: python3 tools/run_local_app_workflow.py --config <config> --allow-missing")
+        ac.workflow_action_items.append("Run: python3 tools/run_local_app_workflow.py --config <config> --allow-missing")
 
     # Readiness report
     readiness_json = reports_dir / "readiness_gate" / "readiness_report.json"
@@ -215,6 +217,18 @@ def build_operator_action_center(
     if md_path.exists():
         ac.generated_outputs.append(str(md_path.relative_to(project_root)))
 
+    # Paper runtime session
+    paper_runtime_dir = reports_dir / "paper_runtime"
+    latest_session_json = paper_runtime_dir / "latest_session.json"
+    if latest_session_json.exists():
+        ac.latest_paper_runtime_session_path = str(latest_session_json.relative_to(project_root))
+        ac.generated_outputs.append(str(latest_session_json.relative_to(project_root)))
+    else:
+        ac.warnings.append("No paper runtime session found.")
+        ac.paper_runtime_action_items.append(
+            "Run: python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing --write-journal"
+        )
+
     # Next safe commands
     dashboard_cfg = config.get("dashboard", {})
     host = dashboard_cfg.get("host", "127.0.0.1")
@@ -223,6 +237,8 @@ def build_operator_action_center(
     ac.next_safe_commands = [
         f"python3 tools/run_operator_day.py --config {cfg_str} --allow-missing",
         f"python3 tools/show_local_app_status.py --config {cfg_str} --allow-missing",
+        f"python3 tools/show_paper_runtime_journal.py --config {cfg_str} --allow-missing",
+        f"python3 tools/show_paper_runtime_journal.py --config {cfg_str} --allow-missing --write-journal",
         f"python3 tools/run_local_dashboard.py --config {cfg_str}",
         f"open http://{host}:{port}",
     ]
@@ -271,7 +287,7 @@ def render_action_center_summary(ac: ActionCenter) -> str:
         lines.append(" Warning categories:")
         for cat, items in ac.warning_categories.items():
             if items:
-                lines.append(f"  [{cat.upper()}] {len(items)} item(s)")
+                lines.append(f" [{cat.upper()}] {len(items)} item(s)")
                 for item in items:
                     lines.append(f"   - {item}")
         lines.append("")
@@ -301,7 +317,7 @@ def render_action_center_summary(ac: ActionCenter) -> str:
         lines.append("")
 
     if ac.briefing_action_items:
-        lines.append(" Action Items:\n\n Briefing action items:")
+        lines.append(" Briefing action items:")
         for item in ac.briefing_action_items:
             lines.append(f" • {item}")
         lines.append("")
@@ -309,6 +325,12 @@ def render_action_center_summary(ac: ActionCenter) -> str:
     if ac.dashboard_action_items:
         lines.append(" Dashboard action items:")
         for item in ac.dashboard_action_items:
+            lines.append(f" • {item}")
+        lines.append("")
+
+    if ac.paper_runtime_action_items:
+        lines.append(" Paper runtime action items:")
+        for item in ac.paper_runtime_action_items:
             lines.append(f" • {item}")
         lines.append("")
 

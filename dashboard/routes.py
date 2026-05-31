@@ -1,9 +1,10 @@
 """
-Phase 14 + 25 + 26 dashboard routes.
+Phase 14 + 25 + 26 + 27 dashboard routes.
 FastAPI router with all read-only dashboard pages.
 No live trading. No order submission. No broker calls.
 Phase 25: adds /action-center route.
 Phase 26: adds /research-insights route.
+Phase 27: adds /paper-runtime route.
 """
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -32,6 +33,7 @@ from dashboard.templates import (
     render_operator_status,
     render_action_center,
     render_research_insights,
+    render_paper_runtime,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
@@ -148,3 +150,24 @@ def research_insights_page(request: Request) -> HTMLResponse:
             pass
     summary = build_research_insights(project_root, config=config, allow_missing=True)
     return HTMLResponse(render_research_insights(summary))
+
+@router.get("/paper-runtime", response_class=HTMLResponse)
+def paper_runtime_page(request: Request) -> HTMLResponse:
+    """Paper runtime monitoring page: session journal, signals, decisions, risk.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    from dashboard.data_access import get_project_root
+    from local_app.app_config import load_config
+    from paper_runtime.session_journal import build_paper_runtime_session
+
+    project_root = get_project_root()
+    config_path = project_root / "examples" / "local_app_config.example.json"
+    config = {}
+    if config_path.exists():
+        try:
+            config = load_config(config_path)
+        except Exception:
+            pass
+    session = build_paper_runtime_session(project_root, config=config, allow_missing=True)
+    return HTMLResponse(render_paper_runtime(session))

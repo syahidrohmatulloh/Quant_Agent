@@ -3,6 +3,7 @@ HTML template rendering for the Phase 14 dashboard.
 Uses inline CSS only. No external CDN. Escapes all dynamic content.
 Phase 25: adds action center page and fixes operator status rendering.
 Phase 26: adds research insights page.
+Phase 27: adds paper runtime page.
 """
 import html
 from typing import List, Dict, Any, Optional
@@ -25,12 +26,12 @@ def render_home(status: HomeStatusViewModel) -> str:
 <h2>Quant_Agent Local Dashboard</h2>
 <p>This is a local research dashboard for inspecting market data, experiment configs, and paper-only decision reports.</p>
 <ul>
-  <li>{_esc(status.dataset_count)} CSV Datasets</li>
-  <li>{_esc(status.experiment_report_count)} Experiment Reports</li>
-  <li>{_esc(status.dashboard_export_count)} Dashboard JSON Exports</li>
+<li>{_esc(status.dataset_count)} CSV Datasets</li>
+<li>{_esc(status.experiment_report_count)} Experiment Reports</li>
+<li>{_esc(status.dashboard_export_count)} Dashboard JSON Exports</li>
 </ul>
 {latest}
-<p><a href="/research-insights">Research Insights</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a></p>
+<p><a href="/research-insights">Research Insights</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/paper-runtime">Paper Runtime</a></p>
 """
     return wrap_html("Home", body)
 
@@ -50,19 +51,19 @@ def render_datasets(datasets: List[DatasetViewModel]) -> str:
                 issues += f' {err_count} errors'
             rows += f"""
 <tr>
-  <td>{_esc(d.filename)}</td>
-  <td>{_esc(d.symbol)}</td>
-  <td>{_esc(d.timeframe)}</td>
-  <td>{_esc(d.source)}</td>
-  <td>{_esc(d.row_count)}</td>
-  <td>{status_badge}{issues}</td>
+<td>{_esc(d.filename)}</td>
+<td>{_esc(d.symbol)}</td>
+<td>{_esc(d.timeframe)}</td>
+<td>{_esc(d.source)}</td>
+<td>{_esc(d.row_count)}</td>
+<td>{status_badge}{issues}</td>
 </tr>
 """
     body = f"""
 <h2>Datasets</h2>
-<table>
-  <tr><th>Filename</th><th>Symbol</th><th>Timeframe</th><th>Source</th><th>Rows</th><th>Status</th></tr>
-  {rows}
+<table border="1" cellpadding="5" cellspacing="0">
+<tr><th>Filename</th><th>Symbol</th><th>Timeframe</th><th>Source</th><th>Rows</th><th>Status</th></tr>
+{rows}
 </table>
 """
     return wrap_html("Datasets", body)
@@ -116,17 +117,17 @@ def render_experiment_configs(configs: List[ExperimentConfigViewModel]) -> str:
             data = 'data_only' if c.data_only else 'missing'
             rows += f"""
 <tr>
-  <td>{_esc(c.name)}</td>
-  <td>{status}</td>
-  <td>{paper} {data}</td>
-  <td><a href="/experiments/run?config={_esc(c.path)}">Preview</a></td>
+<td>{_esc(c.name)}</td>
+<td>{status}</td>
+<td>{paper} {data}</td>
+<td><a href="/experiments/run?config={_esc(c.path)}">Preview</a></td>
 </tr>
 """
     body = f"""
 <h2>Experiment Configs</h2>
-<table>
-  <tr><th>Name</th><th>Valid</th><th>Safety</th><th>Preview</th></tr>
-  {rows}
+<table border="1" cellpadding="5" cellspacing="0">
+<tr><th>Name</th><th>Valid</th><th>Safety</th><th>Preview</th></tr>
+{rows}
 </table>
 """
     return wrap_html("Experiment Configs", body)
@@ -140,7 +141,7 @@ def render_experiment_run_preview(preview: Dict[str, Any], config_path: str) -> 
         missing_html = "<h3>Missing CSV Warnings</h3>\n"
         for m in missing:
             missing_html += f"<li>{_esc(m)}</li>\n"
-        missing_html += "<p></p>"
+        missing_html += ""
     body = f"""
 <h2>Experiment Run Preview</h2>
 <p><b>Config:</b> <code>{_esc(config_path)}</code></p>
@@ -164,21 +165,21 @@ def render_experiment_history(history: List[ExperimentHistoryViewModel]) -> str:
         for h in history:
             rows += f"""
 <tr>
-  <td>{_esc(h.run_id)}</td>
-  <td>{_esc(h.experiment_name)}</td>
-  <td>{_esc(h.generated_at)}</td>
-  <td>{_esc(h.symbol_count)} / {_esc(h.strategy_count)}</td>
-  <td>
-    {f'<a href="/reports/{_esc(h.result_path)}">Result</a>' if h.result_path else ""}
-    {f'<a href="/dashboard/latest">JSON</a>' if h.dashboard_json_path else ""}
-  </td>
+<td>{_esc(h.run_id)}</td>
+<td>{_esc(h.experiment_name)}</td>
+<td>{_esc(h.generated_at)}</td>
+<td>{_esc(h.symbol_count)} / {_esc(h.strategy_count)}</td>
+<td>
+{f'<a href="/reports/{h.result_path}">Result</a>' if h.result_path else ""}
+{f'<a href="/dashboard/latest">JSON</a>' if h.dashboard_json_path else ""}
+</td>
 </tr>
 """
     body = f"""
 <h2>Experiment History</h2>
-<table>
-  <tr><th>Run ID</th><th>Name</th><th>Generated</th><th>Symbols / Strategies</th><th>Links</th></tr>
-  {rows}
+<table border="1" cellpadding="5" cellspacing="0">
+<tr><th>Run ID</th><th>Name</th><th>Generated</th><th>Symbols / Strategies</th><th>Links</th></tr>
+{rows}
 </table>
 """
     return wrap_html("Experiment History", body)
@@ -201,8 +202,8 @@ LONG: {_esc(summary.get("consensus_long", 0))} |
 SHORT: {_esc(summary.get("consensus_short", 0))} |
 NEUTRAL: {_esc(summary.get("consensus_neutral", 0))}</p>
 <h3>Per-Symbol Consensus</h3>
-<table>
-  <tr><th>Symbol</th><th>Timeframe</th><th>Signal</th><th>Strategies</th></tr>
+<table border="1" cellpadding="5" cellspacing="0">
+<tr><th>Symbol</th><th>Timeframe</th><th>Signal</th><th>Strategies</th></tr>
 """
     for s in symbols:
         consensus = s.get("consensus", {})
@@ -210,10 +211,10 @@ NEUTRAL: {_esc(summary.get("consensus_neutral", 0))}</p>
         strat_count = len(s.get("strategies", []))
         body += f"""
 <tr>
-  <td>{_esc(s.get("symbol", ""))}</td>
-  <td>{_esc(s.get("timeframe", ""))}</td>
-  <td>{_esc(signal)}</td>
-  <td>{_esc(strat_count)}</td>
+<td>{_esc(s.get("symbol", ""))}</td>
+<td>{_esc(s.get("timeframe", ""))}</td>
+<td>{_esc(signal)}</td>
+<td>{_esc(strat_count)}</td>
 </tr>
 """
     body += "</table>"
@@ -227,16 +228,16 @@ def render_reports(reports: List[ReportViewModel]) -> str:
         for r in reports:
             rows += f"""
 <tr>
-  <td>{_esc(r.title)}</td>
-  <td>{_esc(r.generated_at or "N/A")}</td>
-  <td><code>{_esc(r.path)}</code></td>
+<td>{_esc(r.title)}</td>
+<td>{_esc(r.generated_at or "N/A")}</td>
+<td><code>{_esc(r.path)}</code></td>
 </tr>
 """
     body = f"""
 <h2>Reports</h2>
-<table>
-  <tr><th>Title</th><th>Generated</th><th>Path</th></tr>
-  {rows}
+<table border="1" cellpadding="5" cellspacing="0">
+<tr><th>Title</th><th>Generated</th><th>Path</th></tr>
+{rows}
 </table>
 """
     return wrap_html("Reports", body)
@@ -266,6 +267,7 @@ def render_operator_status(project_root, config=None):
 <pre>{escaped_summary}</pre>
 <p><a href="/action-center">View Action Center</a></p>
 <p><a href="/research-insights">View Research Insights</a></p>
+<p><a href="/paper-runtime">View Paper Runtime</a></p>
 """
 
 def render_action_center(ac) -> str:
@@ -276,7 +278,8 @@ def render_action_center(ac) -> str:
     # Build warning categories HTML
     cat_html = ""
     if ac.warning_categories:
-        cat_html += '<table><tr><th>Category</th><th>Count</th><th>Items</th></tr>'
+        cat_html += '<table border="1" cellpadding="5" cellspacing="0">'
+        cat_html += '<tr><th>Category</th><th>Count</th><th>Items</th></tr>'
         for cat, items in ac.warning_categories.items():
             if items:
                 items_list = "<br>".join(html.escape(item) for item in items)
@@ -341,7 +344,7 @@ def render_action_center(ac) -> str:
     body = f"""
 <h2>Action Center</h2>
 <p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
-<p style="color:{overall_color}">Overall: {_esc(ac.overall)}</p>
+<p>Overall: <span style="color:{overall_color}">{_esc(ac.overall)}</span></p>
 <p>Mode: {_esc(ac.mode)} | Paper-only: {_esc(ac.paper_only)} | Data-only: {_esc(ac.data_only)} | No order submission: {_esc(ac.no_order_submission)}</p>
 <p>{_esc(ac.disclaimer)}</p>
 <h3>Readiness</h3>
@@ -368,11 +371,11 @@ def render_action_center(ac) -> str:
 {outputs_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/research-insights">View Research Insights</a></p>
-<p>Reminder: reports/logs/local outputs should not be committed.<br>
-This tool does not approve or enable live trading.<br>
-No broker calls. No live network. No credential prompts.<br>
-No actual email send. No actual Telegram send. No cron install.</p>
+<p><a href="/">Home</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a></p>
+<p>Reminder: reports/logs/local outputs should not be committed.</p>
+<p>This tool does not approve or enable live trading.</p>
+<p>No broker calls. No live network. No credential prompts.</p>
+<p>No actual email send. No actual Telegram send. No cron install.</p>
 """
     return wrap_html("Action Center", body)
 
@@ -394,14 +397,14 @@ def render_research_insights(summary) -> str:
             }.get(s.classification, "#888")
             strat_rows += f"""
 <tr>
-  <td>{_esc(s.name)}</td>
-  <td style="color:{color}">{_esc(s.classification)}</td>
-  <td>{_esc(s.reason)}</td>
-  <td>{_esc(s.score) if s.score is not None else "N/A"}</td>
-  <td>{_esc(s.sharpe_metric) if s.sharpe_metric is not None else "N/A"}</td>
-  <td>{_esc(s.win_rate_metric) if s.win_rate_metric is not None else "N/A"}</td>
-  <td>{_esc(s.drawdown_metric) if s.drawdown_metric is not None else "N/A"}</td>
-  <td>{_esc(s.sample_size) if s.sample_size is not None else "N/A"}</td>
+<td>{_esc(s.name)}</td>
+<td style="color:{color}">{_esc(s.classification)}</td>
+<td>{_esc(s.reason)}</td>
+<td>{_esc(s.score) if s.score is not None else "N/A"}</td>
+<td>{_esc(s.sharpe_metric) if s.sharpe_metric is not None else "N/A"}</td>
+<td>{_esc(s.win_rate_metric) if s.win_rate_metric is not None else "N/A"}</td>
+<td>{_esc(s.drawdown_metric) if s.drawdown_metric is not None else "N/A"}</td>
+<td>{_esc(s.sample_size) if s.sample_size is not None else "N/A"}</td>
 </tr>
 """
     else:
@@ -473,18 +476,9 @@ def render_research_insights(summary) -> str:
 <p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
 <p>Generated: {_esc(summary.generated_at)} | Sources: {len(summary.source_paths)}</p>
 <h3>Strategy Comparison</h3>
-<table>
-  <tr>
-    <th>Name</th>
-    <th>Classification</th>
-    <th>Reason</th>
-    <th>Score</th>
-    <th>Sharpe</th>
-    <th>Win Rate</th>
-    <th>Drawdown</th>
-    <th>Sample Size</th>
-  </tr>
-  {strat_rows}
+<table border="1" cellpadding="5" cellspacing="0">
+<tr><th>Name</th><th>Classification</th><th>Reason</th><th>Score</th><th>Sharpe</th><th>Win Rate</th><th>Drawdown</th><th>Sample Size</th></tr>
+{strat_rows}
 </table>
 <h3>Top Candidates (further paper testing)</h3>
 {top_html}
@@ -498,10 +492,183 @@ def render_research_insights(summary) -> str:
 {dq_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a></p>
-<p>Reminder: reports/logs/local outputs should not be committed.<br>
-This tool does not approve or enable live trading.<br>
-No broker calls. No live network. No credential prompts.<br>
-No actual email send. No actual Telegram send. No cron install.</p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/paper-runtime">Paper Runtime</a></p>
+<p>Reminder: reports/logs/local outputs should not be committed.</p>
+<p>This tool does not approve or enable live trading.</p>
+<p>No broker calls. No live network. No credential prompts.</p>
+<p>No actual email send. No actual Telegram send. No cron install.</p>
 """
     return wrap_html("Research Insights", body)
+
+def render_paper_runtime(session) -> str:
+    """Render paper runtime monitoring page.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    # Workflow status badge
+    wf_status = session.workflow_status or "unknown"
+    wf_color = {
+        "completed": "#080",
+        "not_found": "#888",
+        "no_steps": "#888",
+        "in_progress": "#06c",
+    }.get(wf_status, "#a60")
+    if wf_status.startswith("failed"):
+        wf_color = "#c00"
+    elif wf_status.startswith("warnings"):
+        wf_color = "#a60"
+
+    # Signal summary
+    sig_status = session.signal_summary.get("status", "N/A")
+    sig_html = ""
+    if sig_status == "available":
+        sig_count = session.signal_summary.get("count", 0)
+        sig_html += f"<p>Signals found: {sig_count}</p>"
+        signals = session.signal_summary.get("signals", [])
+        if signals:
+            sig_html += "<ul>"
+            for sig in signals[:10]:
+                sig_html += f"<li>{_esc(str(sig))}</li>"
+            sig_html += "</ul>"
+    else:
+        sig_html = "<p>No signal summary available yet.</p>"
+
+    # Paper decision summary
+    dec_status = session.paper_decision_summary.get("status", "N/A")
+    dec_html = ""
+    if dec_status == "available":
+        dec_count = session.paper_decision_summary.get("count", 0)
+        dec_html += f"<p>Paper decisions found: {dec_count}</p>"
+    else:
+        dec_html = "<p>No paper decision summary available yet.</p>"
+
+    # Portfolio summary
+    port_status = session.portfolio_summary.get("status", "N/A")
+    port_html = ""
+    if port_status == "available":
+        pos_count = session.portfolio_summary.get("position_count", 0)
+        port_html += f"<p>Positions: {pos_count}</p>"
+        if session.portfolio_summary.get("source"):
+            port_html += f"<p>Source: <code>{_esc(session.portfolio_summary['source'])}</code></p>"
+    else:
+        port_html = "<p>No portfolio summary available yet.</p>"
+
+    # PnL summary
+    pnl_status = session.pnl_summary.get("status", "N/A")
+    pnl_html = ""
+    if pnl_status == "available":
+        if session.pnl_summary.get("source"):
+            pnl_html += f"<p>Source: <code>{_esc(session.pnl_summary['source'])}</code></p>"
+    else:
+        pnl_html = "<p>No PnL summary available yet.</p>"
+
+    # Exposure summary
+    exp_status = session.exposure_summary.get("status", "N/A")
+    exp_html = ""
+    if exp_status == "available":
+        if session.exposure_summary.get("source"):
+            exp_html += f"<p>Source: <code>{_esc(session.exposure_summary['source'])}</code></p>"
+    else:
+        exp_html = "<p>No exposure summary available yet.</p>"
+
+    # Risk warnings
+    risk_html = ""
+    if session.risk_warnings:
+        risk_html += f"<p>Count: {len(session.risk_warnings)}</p><ul>"
+        for w in session.risk_warnings[:20]:
+            risk_html += f"<li>{_esc(w)}</li>"
+        risk_html += "</ul>"
+    else:
+        risk_html = "<p>None</p>"
+
+    # Generated outputs
+    outputs_html = ""
+    if session.generated_outputs:
+        outputs_html += f"<p>Count: {len(session.generated_outputs)}</p><ul>"
+        for p in session.generated_outputs[:20]:
+            outputs_html += f"<li><code>{_esc(p)}</code></li>"
+        outputs_html += "</ul>"
+        if len(session.generated_outputs) > 20:
+            outputs_html += f"<p>... and {len(session.generated_outputs) - 20} more</p>"
+    else:
+        outputs_html = "<p>No paper runtime outputs found yet.</p>"
+
+    # Warnings
+    warnings_html = ""
+    if session.warnings:
+        warnings_html += f"<p>Count: {len(session.warnings)}</p><ul>"
+        for w in session.warnings[:20]:
+            warnings_html += f"<li>{_esc(w)}</li>"
+        warnings_html += "</ul>"
+    else:
+        warnings_html = "<p>None</p>"
+
+    # Blockers
+    blockers_html = ""
+    if session.blockers:
+        blockers_html += f"<p>Count: {len(session.blockers)}</p><ul>"
+        for b in session.blockers:
+            blockers_html += f"<li><b>{_esc(b)}</b></li>"
+        blockers_html += "</ul>"
+    else:
+        blockers_html = "<p>None</p>"
+
+    # Next safe commands
+    commands_html = ""
+    if session.next_safe_commands:
+        commands_html += "<ul>"
+        for cmd in session.next_safe_commands:
+            commands_html += f"<li><code>{_esc(cmd)}</code></li>"
+        commands_html += "</ul>"
+    else:
+        commands_html = "<p>None</p>"
+
+    body = f"""
+<h2>Paper Runtime Session Monitor</h2>
+<p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
+<p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
+<p>Session ID: <code>{_esc(session.session_id or "N/A")}</code></p>
+<p>Generated: {_esc(session.generated_at or "N/A")}</p>
+<p>Paper-only: {_esc(session.paper_only)} | Data-only: {_esc(session.data_only)} | No order submission: {_esc(session.no_order_submission)}</p>
+
+<h3>Workflow Status</h3>
+<p><span style="color:{wf_color}">{_esc(wf_status)}</span></p>
+<p>Steps: {len(session.workflow_steps)}</p>
+
+<h3>Signal Summary</h3>
+{sig_html}
+
+<h3>Paper Decision Summary</h3>
+{dec_html}
+
+<h3>Portfolio Summary</h3>
+{port_html}
+
+<h3>PnL Summary</h3>
+{pnl_html}
+
+<h3>Exposure Summary</h3>
+{exp_html}
+
+<h3>Risk Warnings</h3>
+{risk_html}
+
+<h3>Generated Outputs</h3>
+{outputs_html}
+
+<h3>Warnings</h3>
+{warnings_html}
+
+<h3>Blockers</h3>
+{blockers_html}
+
+<h3>Next Safe Commands</h3>
+{commands_html}
+
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a></p>
+<p>Reminder: reports/logs/local outputs should not be committed.</p>
+<p>This tool does not approve or enable live trading.</p>
+<p>No broker calls. No live network. No credential prompts.</p>
+<p>No actual email send. No actual Telegram send. No cron install.</p>
+"""
+    return wrap_html("Paper Runtime", body)

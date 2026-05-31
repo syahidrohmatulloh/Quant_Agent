@@ -14,12 +14,46 @@
 2. Run readiness audit
 3. Review dashboard
 
+## Paper Runtime Journal Review (Phase 27)
+
+After running the local workflow, review the paper runtime journal to understand what happened in the latest session:
+
+```bash
+python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing
+```
+
+This shows:
+- Paper runtime session summary
+- Workflow status and steps
+- Signal summary if available
+- Paper decision summary if available
+- Portfolio/exposure/PnL summary if available
+- Risk warnings
+- Generated output paths
+- Next safe commands
+
+To write the journal outputs to disk:
+
+```bash
+python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing --write-journal
+```
+
+You can also view it in the dashboard at: `http://127.0.0.1:8000/paper-runtime`
+
+Paper Runtime Journal is **local-only** and **paper-only / data-only**:
+- No live trading
+- No order submission
+- Not financial advice
+- Does not approve or enable live trading
+- Does not guarantee performance
+- Generated outputs are local and should not be committed
+
 ## Research Insights Review (Phase 26)
 
 After running research analytics, review the research insights to understand which strategies deserve further paper testing:
 
 ```bash
-python3 tools/show_research_insights.py   --config examples/research_analytics_config.example.json   --allow-missing
+python3 tools/show_research_insights.py --config examples/research_analytics_config.example.json --allow-missing
 ```
 
 This shows:
@@ -45,7 +79,7 @@ Research Insights is **local-only** and **paper-only / data-only**:
 For a simpler daily routine, use the operator day command:
 
 ```bash
-python3 tools/run_operator_day.py   --config examples/local_app_config.example.json   --allow-missing
+python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing
 ```
 
 This single safe command orchestrates:
@@ -81,13 +115,13 @@ Generated reports, logs, and local outputs remain in `reports/` and should **not
 For a focused view of what needs attention, use the action center:
 
 ```bash
-python3 tools/show_action_center.py   --config examples/local_app_config.example.json   --allow-missing
+python3 tools/show_action_center.py --config examples/local_app_config.example.json --allow-missing
 ```
 
 The action center shows:
 - Categorized warnings (config, data, safety, tests, docs)
 - Critical blockers
-- Action items per domain (readiness, workflow, briefing, dashboard)
+- Action items per domain (readiness, workflow, briefing, dashboard, paper runtime)
 - Latest generated outputs
 - Next safe commands
 
@@ -96,6 +130,10 @@ You can also view it in the dashboard at: `http://127.0.0.1:8000/action-center`
 ## Commands
 
 ```bash
+# Paper runtime journal
+python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing
+python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing --write-journal
+
 # Research insights
 python3 tools/show_research_insights.py --config examples/research_analytics_config.example.json --allow-missing
 
