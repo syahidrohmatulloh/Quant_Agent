@@ -1,68 +1,81 @@
 # Daily Workflow
 
-> **PAPER-ONLY / DATA-ONLY.** No live trading. No order submission. Not financial advice.
+## Morning
+1. Run data collection
+2. Run research analytics
+3. Review signals
 
-## Recommended Daily Sequence
+## Midday
+1. Run paper simulator
+2. Review trades
 
-### 1. Update/Import Data Manually
+## Evening
+1. Generate daily briefing
+2. Run readiness audit
+3. Review dashboard
+
+## One-Command Operator Flow (Phase 24)
+
+For a simpler daily routine, use the operator day command:
 
 ```bash
-# Import new CSV market data
-python3 tools/import_csv_market_data.py --csv data/raw_imports/EURUSD_2024.csv --pair EURUSD
-
-# Validate imported data
-python3 tools/validate_market_data.py --dataset EURUSD
+python3 tools/run_operator_day.py \
+    --config examples/local_app_config.example.json \
+    --allow-missing
 ```
 
-### 2. Run Experiment
+This single safe command orchestrates:
+- Config validation
+- Directory initialization
+- Local app workflow
+- Health bundle collection
+- Readiness audit (if config available)
+- Operator status summary
+
+It is **paper-only / data-only**:
+- No live trading
+- No real-money order submission
+- No broker calls
+- No live network calls
+- No credential input prompts
+- No actual email send
+- No actual Telegram send
+- No cron installation
+- No background service installation
+
+The final summary shows:
+- Workflow steps completed
+- Readiness score and grade
+- Briefing and dashboard status
+- Warnings and blockers
+- Next safe commands to open the dashboard
+
+Generated reports, logs, and local outputs remain in `reports/` and should **not be committed**.
+
+## Commands
 
 ```bash
-# Run strategy experiment
-python3 tools/run_experiment.py --config examples/experiment_config.example.json
-```
+# One-command operator day
+python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing
 
-### 3. Run Paper Orchestration
+# Data collection
+python3 tools/run_data_collection.py --config examples/data_collection_config.example.json
 
-```bash
-# Generate paper trading decisions
-python3 tools/run_paper_orchestration.py --config examples/paper_orchestration_config.example.json
-```
+# Research analytics
+python3 tools/run_research_analytics.py --config examples/research_analytics_config.example.json
 
-### 4. Run Paper Simulator
-
-```bash
-# Simulate portfolio performance
+# Paper simulator
 python3 tools/run_paper_simulator.py --config examples/paper_simulator_config.example.json
-```
 
-### 5. Generate Briefing
-
-```bash
-# Generate daily briefing text
+# Daily briefing
 python3 tools/generate_daily_briefing.py --config examples/briefing_config.example.json
-```
 
-### 6. Run Readiness Audit (Optional)
-
-```bash
-# Run readiness audit if you changed code
+# Readiness audit
 python3 tools/run_readiness_audit.py --config examples/readiness_gate_config.example.json --allow-missing
-```
 
-### 7. Review Dashboard
-
-```bash
-# Start dashboard
+# Dashboard
 python3 tools/run_local_dashboard.py --config examples/local_app_config.example.json
 
-# Open browser
-open http://127.0.0.1:8000
+# Show status
+python3 tools/show_local_app_status.py --config examples/local_app_config.example.json
 ```
-
-## Important Notes
-
-- This workflow is entirely paper-only. No live trading occurs.
-- All data is CSV-based. No live market data streaming.
-- Cron scheduling is optional and must be configured manually. The scheduler tool only prints commands.
-- Review outputs in `reports/` and `logs/` before making any decisions.
-- The readiness gate explicitly does not approve or enable live trading.

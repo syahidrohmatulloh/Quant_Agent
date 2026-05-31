@@ -284,3 +284,27 @@ def render_report_detail(report_id: str, content: str) -> str:
 </div>
 """
     return wrap_html(f"Report {_esc(report_id)}", body)
+
+
+def render_operator_status(project_root, config=None):
+    """Render local operator status page.
+
+    PAPER-ONLY / DATA-ONLY. No live trading.
+    """
+    from local_app.operator_status import build_operator_status
+
+    status = build_operator_status(project_root, config or {})
+    summary = status.render_summary()
+
+    escaped_summary = html.escape(summary) if "html" in globals() else summary
+
+    return f"""
+    <html>
+      <head><title>Quant_Agent Operator Status</title></head>
+      <body>
+        <h1>Quant_Agent Operator Status</h1>
+        <p><strong>PAPER-ONLY / DATA-ONLY.</strong> No live trading. No order submission.</p>
+        <pre>{escaped_summary}</pre>
+      </body>
+    </html>
+    """

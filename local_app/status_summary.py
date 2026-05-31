@@ -1,6 +1,8 @@
 """Status summary for local app.
 
 Shows phase readiness, latest reports, directories, warnings, next command.
+Adds clearer sections for safety mode, local outputs, readiness, briefing,
+dashboard, and next safe commands.
 No external network.
 """
 
@@ -15,11 +17,17 @@ def build_status(config: Dict[str, Any], project_root: Path) -> Dict[str, Any]:
         "paper_only": True,
         "data_only": True,
         "no_order_submission": True,
+        "safety_mode": "PAPER-ONLY / DATA-ONLY",
         "phases_ready": {},
         "latest_reports": {},
         "directories": {},
+        "local_outputs": {},
+        "readiness": {},
+        "briefing": {},
+        "dashboard": {},
         "warnings": [],
         "next_suggested_command": "",
+        "next_safe_commands": [],
     }
 
     # Phase readiness based on directory existence
@@ -56,10 +64,83 @@ def build_status(config: Dict[str, Any], project_root: Path) -> Dict[str, Any]:
             "path": rel_path,
         }
 
+    # Local outputs summary
+    for subdir in ["briefing", "paper_simulator", "dashboard", "local_app", "research_analytics", "data_manager", "readiness_gate"]:
+        sub = reports_dir / subdir
+        if sub.exists():
+            file_count = len(list(sub.glob("*")))
+            status["local_outputs"][subdir] = {
+                "exists": True,
+                "file_count": file_count,
+            }
+        else:
+            status["local_outputs"][subdir] = {
+                "exists": False,
+                "file_count": 0,
+            }
+
+    # Readiness summary
+    readiness_json = reports_dir / "readiness_gate" / "readiness_report.json"
+    if readiness_json.exists():
+        try:
+            with open(readiness_json, "r", encoding="utf-8") as f:
+                rd = json.load(f)
+            score = rd.get("score", {})
+            status["readiness"] = {
+                "available": True,
+                "score": score.get("score"),
+                "grade": score.get("grade"),
+                "status": score.get("status"),
+                "path": str(readiness_json.relative_to(project_root)),
+            }
+        except Exception:
+            status["readiness"] = {"available": False, "error": "Could not parse readiness JSON"}
+    else:
+        status["readiness"] = {"available": False}
+        status["warnings"].append("No readiness report found.")
+
+    # Briefing summary
+    briefing_dir = reports_dir / "briefing"
+    if briefing_dir.exists():
+        files = sorted(briefing_dir.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if files:
+            status["briefing"] = {
+                "available": True,
+                "latest": str(files[0].relative_to(project_root)),
+            }
+        else:
+            status["briefing"] = {"available": False}
+    else:
+        status["briefing"] = {"available": False}
+
+    # Dashboard summary
+    dashboard_dir = reports_dir / "dashboard"
+    if dashboard_dir.exists():
+        files = sorted(dashboard_dir.glob("*"), key=lambda p: p.stat().st_mtime, reverse=True)
+        if files:
+            status["dashboard"] = {
+                "available": True,
+                "latest": str(files[0].relative_to(project_root)),
+            }
+        else:
+            status["dashboard"] = {"available": False}
+    else:
+        status["dashboard"] = {"available": False}
+
     # Next suggested command
     status["next_suggested_command"] = (
         "python3 tools/run_local_app_workflow.py "
         "--config examples/local_app_config.example.json --allow-missing"
     )
+
+    # Next safe commands
+    dashboard_cfg = config.get("dashboard", {})
+    host = dashboard_cfg.get("host", "127.0.0.1")
+    port = dashboard_cfg.get("port", 8000)
+    status["next_safe_commands"] = [
+        "python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing",
+        f"python3 tools/run_local_dashboard.py --config examples/local_app_config.example.json",
+        f"open http://{host}:{port}",
+    ]
 
     return status

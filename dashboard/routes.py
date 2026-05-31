@@ -27,6 +27,7 @@ from dashboard.templates import (
     render_latest_dashboard,
     render_reports,
     render_report_detail,
+    render_operator_status,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
@@ -106,3 +107,8 @@ async def health():
         "data_only": True,
         "no_order_submission": True,
     })
+
+
+@router.get("/operator", response_class=HTMLResponse)
+def operator_status_page() -> HTMLResponse:
+    return HTMLResponse(render_operator_status(data_access.get_project_root(), {}))

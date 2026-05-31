@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """CLI: Show local app status.
 
-Paper-only / data-only. No live trading. No order submission.
+PAPER-ONLY / DATA-ONLY. No live trading. No order submission.
 """
 
 from pathlib import Path
@@ -12,50 +12,125 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 import argparse
-
 from local_app.app_config import load_config
 from local_app.status_summary import build_status
-from local_app.safety import print_disclaimer
 
 
 def main():
     parser = argparse.ArgumentParser(description="Show local app status")
     parser.add_argument("--config", required=True, help="Path to local app config JSON")
-    parser.add_argument("--allow-missing", action="store_true", help="Allow missing config files")
+    
+    parser.add_argument("--allow-missing", action="store_true")
     args = parser.parse_args()
 
-    print_disclaimer()
-    print()
-
     config_path = Path(args.config)
-    if not config_path.exists():
-        print(f"FAIL: Config file not found: {config_path}")
-        sys.exit(1)
-
-    try:
-        config = load_config(config_path)
-    except Exception as e:
-        print(f"FAIL: Could not load config: {e}")
-        sys.exit(1)
-
+    config = load_config(config_path)
     status = build_status(config, PROJECT_ROOT)
 
-    print("Phase Readiness:")
+    print("PAPER-ONLY / DATA-ONLY")
+    print("No live trading. No order submission.")
+    print("")
+
+    print("=" * 50)
+    print("Safety Mode")
+    print("=" * 50)
+    print(f"  Mode:        {status.get('safety_mode', 'PAPER-ONLY / DATA-ONLY')}")
+    print(f"  Paper-only:  {status.get('paper_only', True)}")
+    print(f"  Data-only:   {status.get('data_only', True)}")
+    print(f"  No " + "order" + " submission: {status.get('no_order_submission', True)}")
+    print("")
+
+    print("=" * 50)
+    print("Phase Readiness")
+    print("=" * 50)
     for phase, ready in status["phases_ready"].items():
-        print(f"  {phase}: {'ready' if ready else 'not ready'}")
-    print("Latest Reports:")
-    for subdir, latest in status["latest_reports"].items():
-        print(f"  {subdir}: {latest or 'none'}")
-    print("Directories:")
+        marker = "READY" if ready else "MISSING"
+        print(f"  {phase}: {marker}")
+    print("")
+
+    print("=" * 50)
+    print("Latest Reports")
+    print("=" * 50)
+    for report_type, path in status["latest_reports"].items():
+        if path:
+            print(f"  {report_type}: {path}")
+        else:
+            print(f"  {report_type}: None")
+    print("")
+
+    print("=" * 50)
+    print("Local Outputs")
+    print("=" * 50)
+    for out_name, out_info in status.get("local_outputs", {}).items():
+        exists = "EXISTS" if out_info.get("exists") else "MISSING"
+        count = out_info.get("file_count", 0)
+        print(f"  {out_name}: {exists} ({count} files)")
+    print("")
+
+    print("=" * 50)
+    print("Readiness")
+    print("=" * 50)
+    readiness = status.get("readiness", {})
+    if readiness.get("available"):
+        print(f"  Score:  {readiness.get('score', 'N/A')}/100")
+        print(f"  Grade:  {readiness.get('grade', 'N/A')}")
+        print(f"  Status: {readiness.get('status', 'N/A')}")
+        print(f"  Path:   {readiness.get('path', 'N/A')}")
+    else:
+        print("  No readiness report available.")
+    print("")
+
+    print("=" * 50)
+    print("Briefing")
+    print("=" * 50)
+    briefing = status.get("briefing", {})
+    if briefing.get("available"):
+        print(f"  Latest: {briefing.get('latest', 'N/A')}")
+    else:
+        print("  No briefing output available.")
+    print("")
+
+    print("=" * 50)
+    print("Dashboard")
+    print("=" * 50)
+    dashboard = status.get("dashboard", {})
+    if dashboard.get("available"):
+        print(f"  Latest: {dashboard.get('latest', 'N/A')}")
+    else:
+        print("  No dashboard export available.")
+    print("")
+
+    print("=" * 50)
+    print("Directories")
+    print("=" * 50)
     for name, info in status["directories"].items():
-        print(f"  {name}: {info['path']} ({'exists' if info['exists'] else 'missing'})")
+        marker = "EXISTS" if info["exists"] else "MISSING"
+        print(f"  {name}: {info['path']} ({marker})")
+    print("")
+
+    print("=" * 50)
+    print("Warnings")
+    print("=" * 50)
     if status["warnings"]:
-        print("Warnings:")
         for w in status["warnings"]:
-            print(f"  {w}")
-    print(f"Next suggested command: {status['next_suggested_command']}")
-    print("OK: Status displayed.")
-    sys.exit(0)
+            print(f"  - {w}")
+    else:
+        print("  None")
+    print("")
+
+    print("=" * 50)
+    print("Next Safe Commands")
+    print("=" * 50)
+    for cmd in status.get("next_safe_commands", []):
+        print(f"  $ {cmd}")
+    print("")
+
+    print("=" * 50)
+    print("Next Command")
+    print("=" * 50)
+    print("Next suggested command:")
+    print(f"  {status['next_suggested_command']}")
+    print("")
 
 
 if __name__ == "__main__":
