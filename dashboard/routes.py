@@ -1,7 +1,8 @@
 """
-Phase 14 dashboard routes.
+Phase 14 + 25 dashboard routes.
 FastAPI router with all read-only dashboard pages.
 No live trading. No order submission. No broker calls.
+Phase 25: adds /action-center route.
 """
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -28,23 +29,21 @@ from dashboard.templates import (
     render_reports,
     render_report_detail,
     render_operator_status,
+    render_action_center,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
 router = APIRouter()
-
 
 @router.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     status = get_home_status()
     return HTMLResponse(content=render_home(status))
 
-
 @router.get("/datasets", response_class=HTMLResponse)
 async def datasets(request: Request):
     datasets = list_datasets()
     return HTMLResponse(content=render_datasets(datasets))
-
 
 @router.get("/datasets/{dataset_id}", response_class=HTMLResponse)
 async def dataset_detail(request: Request, dataset_id: str):
@@ -54,12 +53,10 @@ async def dataset_detail(request: Request, dataset_id: str):
         raise HTTPException(status_code=404, detail="Dataset not found")
     return HTMLResponse(content=render_dataset_detail(vm))
 
-
 @router.get("/experiments/configs", response_class=HTMLResponse)
 async def experiment_configs(request: Request):
     configs = list_experiment_configs()
     return HTMLResponse(content=render_experiment_configs(configs))
-
 
 @router.get("/experiments/run", response_class=HTMLResponse)
 async def experiment_run(request: Request, config: str = Query(...)):
@@ -71,24 +68,20 @@ async def experiment_run(request: Request, config: str = Query(...)):
         raise HTTPException(status_code=400, detail=f"Config error: {e}")
     return HTMLResponse(content=render_experiment_run_preview(preview, config))
 
-
 @router.get("/experiments/history", response_class=HTMLResponse)
 async def experiment_history(request: Request):
     history = list_experiment_history()
     return HTMLResponse(content=render_experiment_history(history))
-
 
 @router.get("/dashboard/latest", response_class=HTMLResponse)
 async def latest_dashboard(request: Request):
     data = get_latest_dashboard_json()
     return HTMLResponse(content=render_latest_dashboard(data))
 
-
 @router.get("/reports", response_class=HTMLResponse)
 async def reports(request: Request):
     reports = list_reports()
     return HTMLResponse(content=render_reports(reports))
-
 
 @router.get("/reports/{report_id}", response_class=HTMLResponse)
 async def report_detail(request: Request, report_id: str):
@@ -97,7 +90,6 @@ async def report_detail(request: Request, report_id: str):
     if content is None:
         raise HTTPException(status_code=404, detail="Report not found")
     return HTMLResponse(content=render_report_detail(safe_id, content))
-
 
 @router.get("/health")
 async def health():
@@ -108,7 +100,28 @@ async def health():
         "no_order_submission": True,
     })
 
-
 @router.get("/operator", response_class=HTMLResponse)
-def operator_status_page() -> HTMLResponse:
-    return HTMLResponse(render_operator_status(data_access.get_project_root(), {}))
+def operator_status_page(request: Request) -> HTMLResponse:
+    from dashboard.data_access import get_project_root
+    return HTMLResponse(render_operator_status(get_project_root(), {}))
+
+@router.get("/action-center", response_class=HTMLResponse)
+def action_center_page(request: Request) -> HTMLResponse:
+    """Action center page: categorized warnings, blockers, action items.
+
+    PAPER-ONLY / DATA-ONLY. No live trading.
+    """
+    from dashboard.data_access import get_project_root
+    from local_app.app_config import load_config
+    from local_app.action_center import build_operator_action_center
+
+    project_root = get_project_root()
+    config_path = project_root / "examples" / "local_app_config.example.json"
+    config = {}
+    if config_path.exists():
+        try:
+            config = load_config(config_path)
+        except Exception:
+            pass
+    ac = build_operator_action_center(config, project_root, config_path=config_path, allow_missing=True)
+    return HTMLResponse(render_action_center(ac))

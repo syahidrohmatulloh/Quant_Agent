@@ -20,8 +20,8 @@ For a simpler daily routine, use the operator day command:
 
 ```bash
 python3 tools/run_operator_day.py \
-    --config examples/local_app_config.example.json \
-    --allow-missing
+  --config examples/local_app_config.example.json \
+  --allow-missing
 ```
 
 This single safe command orchestrates:
@@ -52,11 +52,33 @@ The final summary shows:
 
 Generated reports, logs, and local outputs remain in `reports/` and should **not be committed**.
 
+## Action Center (Phase 25)
+
+For a focused view of what needs attention, use the action center:
+
+```bash
+python3 tools/show_action_center.py \
+  --config examples/local_app_config.example.json \
+  --allow-missing
+```
+
+The action center shows:
+- Categorized warnings (config, data, safety, tests, docs)
+- Critical blockers
+- Action items per domain (readiness, workflow, briefing, dashboard)
+- Latest generated outputs
+- Next safe commands
+
+You can also view it in the dashboard at: `http://127.0.0.1:8000/action-center`
+
 ## Commands
 
 ```bash
 # One-command operator day
 python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing
+
+# Action center
+python3 tools/show_action_center.py --config examples/local_app_config.example.json --allow-missing
 
 # Data collection
 python3 tools/run_data_collection.py --config examples/data_collection_config.example.json

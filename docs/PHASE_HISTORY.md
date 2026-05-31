@@ -44,3 +44,26 @@
 - Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
 - All changes remain paper-only / data-only
 - No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+
+## Phase 25
+- Action center for categorized warnings, blockers, and action items
+- Added `local_app/action_center.py` with pure, testable utilities
+  - `categorize_readiness_findings()` — stable 6-category classification
+  - `build_operator_action_center()` — structured action center from local outputs
+  - `render_action_center_summary()` — human-readable CLI output
+- Enhanced `local_app/operator_status.py` with Phase 25 fields
+  - `warning_categories`, `readiness_action_items`, `workflow_action_items`
+  - `briefing_action_items`, `dashboard_action_items`, `latest_operator_run`
+  - Backward-compatible: all new fields have safe defaults
+- Added `tools/show_action_center.py` CLI tool
+- Enhanced `dashboard/templates.py` with `render_action_center()` HTML page
+- Enhanced `dashboard/routes.py` with `/action-center` route
+- Fixed `render_operator_status()` in templates: uses `html.escape()` correctly
+- Added nav link from `/operator` to `/action-center`
+- Added tests:
+  - `tests/local_app/test_phase25_action_center.py`
+  - `tests/dashboard/test_phase25_dashboard.py`
+  - `tests/tools/test_phase25_action_center_cli.py`
+- Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
+- All changes remain paper-only / data-only
+- No live trading, no order submission, no broker calls, no email/Telegram send, no cron

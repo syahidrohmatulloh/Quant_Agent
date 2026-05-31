@@ -3,6 +3,9 @@
 ## Operator Day (Phase 24)
 - `python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing`
 
+## Action Center (Phase 25)
+- `python3 tools/show_action_center.py --config examples/local_app_config.example.json --allow-missing`
+
 ## Data Collection
 - `python3 tools/run_data_collection.py --config examples/data_collection_config.example.json`
 
@@ -22,7 +25,7 @@
 - `python3 tools/run_local_dashboard.py --config examples/local_app_config.example.json`
 
 ## Local App Workflow
-- `python3 tools/run_local_workflow.py --config examples/local_app_config.example.json --allow-missing`
+- `python3 tools/run_local_app_workflow.py --config examples/local_app_config.example.json --allow-missing`
 
 ## Show Local App Status
 - `python3 tools/show_local_app_status.py --config examples/local_app_config.example.json`
