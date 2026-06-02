@@ -134,3 +134,88 @@
 - All changes remain paper-only / data-only
 - No live trading, no order submission, no broker calls, no email/Telegram send, no cron
 - No generated outputs committed
+
+## Phase 28
+- Data Quality Center for Market Data CSV Validation
+- Added `data_quality/` module for structured data quality scanning
+  - `quality_report.py` with `DataQualityIssue`, `DataQualityFileSummary`, and `DataQualityReport` dataclasses
+  - `scan_market_data_file()` — scans a single CSV for all quality issues
+  - `scan_market_data_directory()` — scans all CSVs in a directory
+  - `classify_data_quality()` — classifies overall status: OK | WARN | BLOCKED
+  - `build_data_quality_report()` — builds comprehensive report for all configured directories
+  - `render_data_quality_summary()` — human-readable CLI output with safety disclaimers
+  - `write_data_quality_report()` — writes JSON, Markdown, and dashboard latest.json
+  - `load_latest_data_quality_report()` — loads latest report from disk
+  - Quality checks implemented:
+    - Missing data directories
+    - Empty files
+    - Malformed CSV (parse errors, invalid encoding)
+    - Missing OHLC columns
+    - Duplicate timestamps
+    - Non-monotonic timestamps
+    - Zero/negative prices
+    - High < low violations
+    - Close outside high/low range
+    - Insufficient rows (configurable minimum)
+    - Stale data (configurable hour threshold)
+    - Timezone ambiguity (timestamps without explicit timezone)
+- Added `tools/show_data_quality.py` CLI tool
+  - `--config` required: path to market data import config JSON
+  - `--allow-missing` tolerates missing optional data directories and files
+  - `--write-report` writes JSON + Markdown + dashboard latest.json
+  - Validates `paper_only`, `data_only`, `no_order_submission` must be true
+  - Returns 0 on success, 2 on BLOCKED status, 1 on config/safety failure
+- Enhanced `dashboard/routes.py` with `/data-quality` route
+  - Reads `examples/market_data_import_config.example.json`
+  - Shows empty state with guidance if config missing
+  - Displays quality report with all file summaries, issues, warnings, blockers
+- Enhanced `dashboard/templates.py` with `render_data_quality()` HTML page
+  - File report table: filename, status, rows, columns, dupes, non-mono, missing cols, zero/neg, invalid OHLC, start, end
+  - Issues table with severity, category, message, suggested action
+  - Summary: files scanned, status
+  - Warnings, blockers, data quality notes, generated outputs
+  - Next safe commands
+  - Nav links to all other dashboard pages
+  - Safety disclaimers throughout
+- Added nav links from `/`, `/operator`, `/action-center`, `/research-insights`, `/paper-runtime` to `/data-quality`
+- Added tests:
+  - `tests/data_quality/test_phase28_quality_report.py` — 14 test classes covering:
+    - CSV read (valid, missing, empty)
+    - Timestamp column detection
+    - Timestamp parsing (ISO, MT5, invalid)
+    - Timezone info detection
+    - Scan market data file (valid, missing OHLC, dupes, non-mono, zero/neg prices, high<low, close outside, empty, malformed, missing)
+    - Scan market data directory (scans, empty, nonexistent)
+    - Classify data quality (OK, WARN, BLOCKED)
+    - Build data quality report (no datasets, scans configured dirs, missing dir, stale data, insufficient rows, timezone ambiguity)
+    - Render summary (paper-only, no live trading, next safe commands, file summaries)
+    - Write report (JSON + MD + dashboard JSON)
+    - Load latest report (existing, none)
+    - Hardcoded path checks, forbidden literal checks
+  - `tests/dashboard/test_phase28_data_quality_dashboard.py` — 13 test cases covering:
+    - Route exists, paper-only disclaimer, not financial advice
+    - Data quality header, next safe commands, no live trading
+    - Empty state message, health route unchanged
+    - Nav links from home, operator, action-center, research-insights, paper-runtime
+  - `tests/tools/test_phase28_data_quality_cli.py` — 10 test classes covering:
+    - CLI runs with allow-missing, paper-only/data-only output
+    - Quality center header, no live trading wording
+    - Missing config returns non-zero
+    - Write report creates files, no credentials required
+    - Hardcoded path checks, forbidden literal checks
+    - Docs mention data quality (daily workflow, cheatsheet, phase history)
+- Updated docs:
+  - `docs/DAILY_WORKFLOW.md` — added Phase 28 data quality center section
+  - `docs/COMMAND_CHEATSHEET.md` — added Phase 28 data quality commands
+  - `docs/PHASE_HISTORY.md` — added Phase 28 detailed description
+- Safety wording enforced throughout:
+  - PAPER-ONLY / DATA-ONLY on every output
+  - No live trading
+  - No order submission
+  - Not financial advice
+  - Does not approve or enable live trading
+  - Does not guarantee performance
+  - Does not modify files
+- All changes remain paper-only / data-only
+- No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+- No generated outputs committed

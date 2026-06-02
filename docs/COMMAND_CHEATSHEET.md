@@ -1,11 +1,16 @@
 # Command Cheatsheet
 
-## Research Insights (Phase 26)
-- `python3 tools/show_research_insights.py --config examples/research_analytics_config.example.json --allow-missing`
+## Data Quality Center (Phase 28)
+- `python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json`
+- `python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing`
+- `python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing --write-report`
 
 ## Paper Runtime Journal (Phase 27)
 - `python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing`
 - `python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing --write-journal`
+
+## Research Insights (Phase 26)
+- `python3 tools/show_research_insights.py --config examples/research_analytics_config.example.json --allow-missing`
 
 ## Operator Day (Phase 24)
 - `python3 tools/run_operator_day.py --config examples/local_app_config.example.json --allow-missing`

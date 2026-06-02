@@ -1,10 +1,11 @@
 """
-Phase 14 + 25 + 26 + 27 dashboard routes.
+Phase 14 + 25 + 26 + 27 + 28 dashboard routes.
 FastAPI router with all read-only dashboard pages.
 No live trading. No order submission. No broker calls.
 Phase 25: adds /action-center route.
 Phase 26: adds /research-insights route.
 Phase 27: adds /paper-runtime route.
+Phase 28: adds /data-quality route.
 """
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -34,6 +35,7 @@ from dashboard.templates import (
     render_action_center,
     render_research_insights,
     render_paper_runtime,
+    render_data_quality,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
@@ -171,3 +173,31 @@ def paper_runtime_page(request: Request) -> HTMLResponse:
             pass
     session = build_paper_runtime_session(project_root, config=config, allow_missing=True)
     return HTMLResponse(render_paper_runtime(session))
+
+@router.get("/data-quality", response_class=HTMLResponse)
+def data_quality_page(request: Request) -> HTMLResponse:
+    """Data quality center page: scan market data CSVs for quality issues.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    from dashboard.data_access import get_project_root
+    from local_app.app_config import load_config
+    from data_quality.quality_report import build_data_quality_report, DataQualityReport
+
+    project_root = get_project_root()
+    config_path = project_root / "examples" / "market_data_import_config.example.json"
+    config = {}
+    if config_path.exists():
+        try:
+            config = load_config(config_path)
+        except Exception:
+            pass
+
+    if not config:
+        empty_report = DataQualityReport()
+        empty_report.warnings.append("No market data import config found. Create examples/market_data_import_config.example.json")
+        empty_report.status = "WARN"
+        return HTMLResponse(render_data_quality(empty_report))
+
+    report = build_data_quality_report(project_root, config=config, allow_missing=True)
+    return HTMLResponse(render_data_quality(report))

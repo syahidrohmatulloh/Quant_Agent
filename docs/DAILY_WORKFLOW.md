@@ -5,14 +5,44 @@
 2. Run research analytics
 3. Review signals
 
-## Midday
-1. Run paper simulator
-2. Review trades
+## Data Quality Center Review (Phase 28)
 
-## Evening
-1. Generate daily briefing
-2. Run readiness audit
-3. Review dashboard
+After importing data, review data quality to catch issues before running experiments:
+
+```bash
+python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing
+```
+
+This shows:
+- Missing data directories
+- Empty files
+- Malformed CSV files
+- Missing OHLC columns
+- Duplicate timestamps
+- Non-monotonic timestamps
+- Zero/negative prices
+- High < low violations
+- Close outside high/low range
+- Insufficient rows
+- Stale data
+- Timezone ambiguity
+
+To write the quality report to disk:
+
+```bash
+python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing --write-report
+```
+
+You can also view it in the dashboard at: `http://127.0.0.1:8000/data-quality`
+
+Data Quality Center is **local-only** and **paper-only / data-only**:
+- No live trading
+- No order submission
+- Not financial advice
+- Does not approve or enable live trading
+- Does not guarantee performance
+- Does not modify files
+- Generated outputs are local and should not be committed
 
 ## Paper Runtime Journal Review (Phase 27)
 
@@ -130,6 +160,10 @@ You can also view it in the dashboard at: `http://127.0.0.1:8000/action-center`
 ## Commands
 
 ```bash
+# Data quality center
+python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing
+python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing --write-report
+
 # Paper runtime journal
 python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing
 python3 tools/show_paper_runtime_journal.py --config examples/local_app_config.example.json --allow-missing --write-journal
