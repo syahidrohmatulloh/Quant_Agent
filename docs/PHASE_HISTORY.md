@@ -74,7 +74,7 @@
   - `insight_builder.py` with `ResearchInsightSummary` and `StrategyInsight` dataclasses
   - `build_research_insights()` — reads existing local outputs and builds summaries
   - `classify_strategy_metrics()` — safe paper-only classification logic
-  - `render_research_insights_summary()` — human-readable CLI output
+  - `render_research_insights_summary()` — human-readable CLI output with safety disclaimers
   - `load_strategy_outputs()` — scans reports/experiments, reports/research_analytics, etc.
 - Added `tools/show_research_insights.py` CLI tool
 - Enhanced `dashboard/routes.py` with `/research-insights` route
@@ -184,30 +184,55 @@
     - Timestamp column detection
     - Timestamp parsing (ISO, MT5, invalid)
     - Timezone info detection
-    - Scan market data file (valid, missing OHLC, dupes, non-mono, zero/neg prices, high<low, close outside, empty, malformed, missing)
+    - Scan market data file (valid, missing OHLC, dupes, non-mono, zero/neg prices, high < low, close outside range, empty, malformed, missing)
     - Scan market data directory (scans, empty, nonexistent)
     - Classify data quality (OK, WARN, BLOCKED)
-    - Build data quality report (no datasets, scans configured dirs, missing dir, stale data, insufficient rows, timezone ambiguity)
-    - Render summary (paper-only, no live trading, next safe commands, file summaries)
-    - Write report (JSON + MD + dashboard JSON)
-    - Load latest report (existing, none)
-    - Hardcoded path checks, forbidden literal checks
-  - `tests/dashboard/test_phase28_data_quality_dashboard.py` — 13 test cases covering:
-    - Route exists, paper-only disclaimer, not financial advice
-    - Data quality header, next safe commands, no live trading
-    - Empty state message, health route unchanged
-    - Nav links from home, operator, action-center, research-insights, paper-runtime
-  - `tests/tools/test_phase28_data_quality_cli.py` — 10 test classes covering:
-    - CLI runs with allow-missing, paper-only/data-only output
-    - Quality center header, no live trading wording
-    - Missing config returns non-zero
-    - Write report creates files, no credentials required
-    - Hardcoded path checks, forbidden literal checks
-    - Docs mention data quality (daily workflow, cheatsheet, phase history)
-- Updated docs:
-  - `docs/DAILY_WORKFLOW.md` — added Phase 28 data quality center section
-  - `docs/COMMAND_CHEATSHEET.md` — added Phase 28 data quality commands
-  - `docs/PHASE_HISTORY.md` — added Phase 28 detailed description
+    - Build data quality report (no datasets, scans configured, detects missing dir, stale data, insufficient rows, timezone ambiguity)
+    - Render data quality summary (includes paper-only, no live trading, next safe commands, file summaries)
+    - Write data quality report (writes JSON, Markdown, dashboard latest)
+    - Load latest data quality report (loads existing, returns none when missing)
+    - No hardcoded paths / no forbidden raw literals
+  - `tests/dashboard/test_phase28_data_quality_dashboard.py` — 15 tests covering:
+    - Route exists, paper-only disclaimer, not financial advice, header, next safe commands, no live trading
+    - Empty state, health unchanged, home links, operator links, action-center links, research-insights links, paper-runtime links
+  - `tests/tools/test_phase28_data_quality_cli.py` — 10 tests covering:
+    - Runs with allow-missing, output contains paper-only/data-only, header, no live trading
+    - Returns nonzero for missing config, write-report creates files, no credentials required
+    - No hardcoded paths, no forbidden raw literals, docs mention data quality
+- Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
+- All changes remain paper-only / data-only
+- No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+- No generated outputs committed
+
+## Phase 29
+- Paper Broker Integration Hardening
+- Added `paper_broker/` module for paper broker readiness validation
+  - `readiness.py` with `PaperBrokerCheck` and `PaperBrokerReadinessReport` dataclasses
+  - `build_paper_broker_readiness()` — builds readiness report from config and local checks
+  - `validate_paper_broker_config()` — validates paper_only, data_only, no_order_submission, mode checks
+  - `validate_adapter_contract()` — checks required paper methods, blocks forbidden execution methods
+  - `detect_credential_like_values()` — detects real credentials in config, allows placeholders
+  - `simulate_paper_connectivity()` — local-only connectivity simulation, no network calls
+  - `classify_paper_broker_readiness()` — READY | READY_WITH_WARNINGS | BLOCKED
+  - `render_paper_broker_readiness_summary()` — human-readable CLI output with safety disclaimers
+  - `write_paper_broker_readiness_report()` — writes JSON, Markdown, and dashboard latest.json
+  - `load_latest_paper_broker_readiness()` — loads latest report from disk
+- Added `tools/show_paper_broker_readiness.py` CLI tool
+  - `--config` required: path to config JSON
+  - `--allow-missing` tolerates missing optional broker config
+  - `--write-report` writes outputs to `reports/paper_broker/`
+  - Validates `paper_only`, `data_only`, `no_order_submission` must be true
+  - Returns 0 for READY or READY_WITH_WARNINGS, 2 for BLOCKED, 1 for config/safety failure
+- Enhanced `dashboard/routes.py` with `/paper-broker` route
+  - Reads `examples/local_app_config.example.json`
+  - Shows readiness report with checks, warnings, blockers, next safe commands
+- Enhanced `dashboard/templates.py` with `render_paper_broker()` HTML page
+  - Status badge, broker name/mode, config path
+  - Checks table with name, status, category, message, suggested action
+  - Warnings, blockers, generated outputs, next safe commands
+  - Nav links to all other dashboard pages
+  - Safety disclaimers throughout
+- Added nav links from `/`, `/operator`, `/action-center`, `/research-insights`, `/paper-runtime`, `/data-quality` to `/paper-broker`
 - Safety wording enforced throughout:
   - PAPER-ONLY / DATA-ONLY on every output
   - No live trading
@@ -215,7 +240,13 @@
   - Not financial advice
   - Does not approve or enable live trading
   - Does not guarantee performance
-  - Does not modify files
+  - No credentials required
+  - No real broker execution
+- Added tests:
+  - `tests/paper_broker/test_phase29_paper_broker_readiness.py`
+  - `tests/dashboard/test_phase29_paper_broker_dashboard.py`
+  - `tests/tools/test_phase29_paper_broker_readiness_cli.py`
+- Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY
 - All changes remain paper-only / data-only
 - No live trading, no order submission, no broker calls, no email/Telegram send, no cron
 - No generated outputs committed

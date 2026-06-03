@@ -5,6 +5,7 @@ Phase 25: adds action center page and fixes operator status rendering.
 Phase 26: adds research insights page.
 Phase 27: adds paper runtime page.
 Phase 28: adds data quality page.
+Phase 29: adds paper broker page.
 """
 from pathlib import Path
 import html
@@ -25,7 +26,7 @@ def _esc(text: Any) -> str:
 def render_home(status: HomeStatusViewModel) -> str:
     latest = f'<p>Latest experiment: <b>{_esc(status.latest_experiment_name)}</b> at {_esc(status.latest_experiment_time)}</p>' if status.latest_experiment_name else '<p>No experiments yet.</p>'
     body = f"""
-<h1>Quant_Agent Local Dashboard</h1>
+<h2>Quant_Agent Local Dashboard</h2>
 <p>This is a local research dashboard for inspecting market data, experiment configs, and paper-only decision reports.</p>
 <ul>
 <li>{_esc(status.dataset_count)} CSV Datasets</li>
@@ -33,7 +34,7 @@ def render_home(status: HomeStatusViewModel) -> str:
 <li>{_esc(status.dashboard_export_count)} Dashboard JSON Exports</li>
 </ul>
 {latest}
-<p><a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html("Home", body)
 
@@ -43,17 +44,17 @@ def render_datasets(datasets: List[DatasetViewModel]) -> str:
     else:
         rows = ""
         for d in datasets:
-            status_badge = '<span style="color:#080">Valid</span>' if d.valid else '<span style="color:#c00">Invalid</span>'
+            status_badge = 'Valid' if d.valid else 'Invalid'
             warn_count = len(d.warnings)
             err_count = len(d.errors)
             issues = ""
             if warn_count:
-                issues += f' <span style="color:#a60">{warn_count} warnings</span>'
+                issues += f' {warn_count} warnings'
             if err_count:
-                issues += f' <span style="color:#c00">{err_count} errors</span>'
+                issues += f' {err_count} errors'
             rows += f"""
 <tr>
-<td><a href="/datasets/{_esc(d.dataset_id)}">{_esc(d.filename)}</a></td>
+<td>{_esc(d.filename)}</td>
 <td>{_esc(d.symbol)}</td>
 <td>{_esc(d.timeframe)}</td>
 <td>{_esc(d.source)}</td>
@@ -63,11 +64,15 @@ def render_datasets(datasets: List[DatasetViewModel]) -> str:
 """
     body = f"""
 <h2>Datasets</h2>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<table>
+<thead>
 <tr><th>Filename</th><th>Symbol</th><th>Timeframe</th><th>Source</th><th>Rows</th><th>Status</th></tr>
+</thead>
+<tbody>
 {rows}
+</tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html("Datasets", body)
 
@@ -77,7 +82,7 @@ def render_dataset_detail(vm: DatasetViewModel) -> str:
     sample = getattr(vm, "sample_last_5", [])
     sample_html = ""
     if sample:
-        sample_html += '<h3>Sample Last 5 Bars</h3><pre style="background:#f5f5f5;padding:10px">'
+        sample_html += '<h3>Sample Last 5 Bars</h3><pre>'
         for row in sample:
             sample_html += html.escape(str(row)) + "\n"
         sample_html += '</pre>'
@@ -98,11 +103,15 @@ def render_dataset_detail(vm: DatasetViewModel) -> str:
 <p><b>Last timestamp:</b> {_esc(last_ts)}</p>
 <p><b>Validation:</b> {"Valid" if vm.valid else "Invalid"}</p>
 <h3>Warnings</h3>
-<ul>{warn_list or "<li>- None</li>\n"}</ul>
+<ul>
+{warn_list or "<li>- None</li>\n"}
+</ul>
 <h3>Errors</h3>
-<ul>{err_list or "<li>- None</li>\n"}</ul>
+<ul>
+{err_list or "<li>- None</li>\n"}
+</ul>
 {sample_html}
-<p><a href="/datasets">Back to Datasets</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/datasets">Back to Datasets</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html(f"Dataset {_esc(vm.filename)}", body)
 
@@ -112,9 +121,9 @@ def render_experiment_configs(configs: List[ExperimentConfigViewModel]) -> str:
     else:
         rows = ""
         for c in configs:
-            status = '<span style="color:#080">OK</span>' if c.valid else '<span style="color:#c00">Invalid</span>'
-            paper = '<span style="color:#080">paper_only</span>' if c.paper_only else '<span style="color:#c00">missing</span>'
-            data = '<span style="color:#080">data_only</span>' if c.data_only else '<span style="color:#c00">missing</span>'
+            status = 'OK' if c.valid else 'Invalid'
+            paper = 'paper_only' if c.paper_only else 'missing'
+            data = 'data_only' if c.data_only else 'missing'
             rows += f"""
 <tr>
 <td>{_esc(c.name)}</td>
@@ -125,11 +134,15 @@ def render_experiment_configs(configs: List[ExperimentConfigViewModel]) -> str:
 """
     body = f"""
 <h2>Experiment Configs</h2>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<table>
+<thead>
 <tr><th>Name</th><th>Valid</th><th>Safety</th><th>Preview</th></tr>
+</thead>
+<tbody>
 {rows}
+</tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html("Experiment Configs", body)
 
@@ -139,10 +152,10 @@ def render_experiment_run_preview(preview: Dict[str, Any], config_path: str) -> 
     missing = preview.get("missing_csv_warnings", [])
     missing_html = ""
     if missing:
-        missing_html = "<h3>Missing CSV Warnings</h3>\n<ul>"
+        missing_html = "<h3>Missing CSV Warnings</h3>\n<ul>\n"
         for m in missing:
             missing_html += f"<li>{_esc(m)}</li>\n"
-        missing_html += "</ul>"
+        missing_html += "</ul>\n"
     body = f"""
 <h2>Experiment Run Preview</h2>
 <p><b>Config:</b> <code>{_esc(config_path)}</code></p>
@@ -154,8 +167,8 @@ def render_experiment_run_preview(preview: Dict[str, Any], config_path: str) -> 
 <p><b>Data-only:</b> {_esc(preview.get("data_only", False))}</p>
 {missing_html}
 <h3>Run from Terminal</h3>
-<pre><code>python3 tools/run_strategy_experiment.py --config {_esc(config_path)}</code></pre>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<pre>python3 tools/run_strategy_experiment.py --config {_esc(config_path)}</pre>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html("Experiment Preview", body)
 
@@ -172,18 +185,22 @@ def render_experiment_history(history: List[ExperimentHistoryViewModel]) -> str:
 <td>{_esc(h.generated_at)}</td>
 <td>{_esc(h.symbol_count)} / {_esc(h.strategy_count)}</td>
 <td>
-{f'<a href="/reports/{_esc(h.result_path)}">Result</a>' if h.result_path else ""}
-{f' <a href="/dashboard/latest">JSON</a>' if h.dashboard_json_path else ""}
+{f'<a href="{_esc(h.result_path)}">Result</a>' if h.result_path else ""}
+{f'<a href="{_esc(h.dashboard_json_path)}">JSON</a>' if h.dashboard_json_path else ""}
 </td>
 </tr>
 """
     body = f"""
 <h2>Experiment History</h2>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<table>
+<thead>
 <tr><th>Run ID</th><th>Name</th><th>Generated</th><th>Symbols / Strategies</th><th>Links</th></tr>
+</thead>
+<tbody>
 {rows}
+</tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html("Experiment History", body)
 
@@ -205,8 +222,11 @@ LONG: {_esc(summary.get("consensus_long", 0))} |
 SHORT: {_esc(summary.get("consensus_short", 0))} |
 NEUTRAL: {_esc(summary.get("consensus_neutral", 0))}</p>
 <h3>Per-Symbol Consensus</h3>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<table>
+<thead>
 <tr><th>Symbol</th><th>Timeframe</th><th>Signal</th><th>Strategies</th></tr>
+</thead>
+<tbody>
 """
     for s in symbols:
         consensus = s.get("consensus", {})
@@ -220,8 +240,11 @@ NEUTRAL: {_esc(summary.get("consensus_neutral", 0))}</p>
 <td>{_esc(strat_count)}</td>
 </tr>
 """
-    body += "</table>"
-    body += '<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>'
+    body += """
+</tbody>
+</table>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+"""
     return wrap_html("Latest Dashboard", body)
 
 def render_reports(reports: List[ReportViewModel]) -> str:
@@ -232,18 +255,22 @@ def render_reports(reports: List[ReportViewModel]) -> str:
         for r in reports:
             rows += f"""
 <tr>
-<td><a href="/reports/{_esc(r.report_id)}">{_esc(r.title)}</a></td>
+<td>{_esc(r.title)}</td>
 <td>{_esc(r.generated_at or "N/A")}</td>
 <td><code>{_esc(r.path)}</code></td>
 </tr>
 """
     body = f"""
 <h2>Reports</h2>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<table>
+<thead>
 <tr><th>Title</th><th>Generated</th><th>Path</th></tr>
+</thead>
+<tbody>
 {rows}
+</tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html("Reports", body)
 
@@ -251,8 +278,8 @@ def render_report_detail(report_id: str, content: str) -> str:
     escaped = _esc(content)
     body = f"""
 <h2>Report: {_esc(report_id)}</h2>
-<pre style="background:#f5f5f5;padding:10px">{escaped}</pre>
-<p><a href="/reports">Back to Reports</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a></p>
+<pre>{escaped}</pre>
+<p><a href="/reports">Back to Reports</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 """
     return wrap_html(f"Report {_esc(report_id)}", body)
 
@@ -270,11 +297,12 @@ def render_operator_status(project_root, config=None):
     return f"""
 <h2>Quant_Agent Operator Status</h2>
 <p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
-<pre style="background:#f5f5f5;padding:10px">{escaped_summary}</pre>
+<pre>{escaped_summary}</pre>
 <p><a href="/action-center">View Action Center</a></p>
 <p><a href="/research-insights">View Research Insights</a></p>
 <p><a href="/paper-runtime">View Paper Runtime</a></p>
 <p><a href="/data-quality">View Data Quality</a></p>
+<p><a href="/paper-broker">View Paper Broker</a></p>
 """
 
 def render_action_center(ac) -> str:
@@ -285,13 +313,12 @@ def render_action_center(ac) -> str:
     # Build warning categories HTML
     cat_html = ""
     if ac.warning_categories:
-        cat_html += '<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">'
-        cat_html += '<tr><th>Category</th><th>Count</th><th>Items</th></tr>'
+        cat_html += '<table><thead><tr><th>Category</th><th>Count</th><th>Items</th></tr></thead><tbody>'
         for cat, items in ac.warning_categories.items():
             if items:
                 items_list = "<br>".join(html.escape(item) for item in items)
                 cat_html += f'<tr><td><b>{_esc(cat.upper())}</b></td><td>{len(items)}</td><td>{items_list}</td></tr>'
-        cat_html += '</table>'
+        cat_html += '</tbody></table>'
     else:
         cat_html = '<p>No categorized warnings.</p>'
 
@@ -378,7 +405,7 @@ def render_action_center(ac) -> str:
 {outputs_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -405,7 +432,7 @@ def render_research_insights(summary) -> str:
             strat_rows += f"""
 <tr>
 <td>{_esc(s.name)}</td>
-<td><span style="color:{color}">{_esc(s.classification)}</span></td>
+<td>{_esc(s.classification)}</td>
 <td>{_esc(s.reason)}</td>
 <td>{_esc(s.score) if s.score is not None else "N/A"}</td>
 <td>{_esc(s.sharpe_metric) if s.sharpe_metric is not None else "N/A"}</td>
@@ -472,7 +499,7 @@ def render_research_insights(summary) -> str:
     if summary.next_safe_commands:
         commands_html += "<ul>"
         for cmd in summary.next_safe_commands:
-            commands_html += f"<li><code>{_esc(cmd)}</code></li>"
+            commands_html += f'<li><code>{_esc(cmd)}</code></li>'
         commands_html += "</ul>"
     else:
         commands_html = "<p>None</p>"
@@ -483,9 +510,13 @@ def render_research_insights(summary) -> str:
 <p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
 <p>Generated: {_esc(summary.generated_at)} | Sources: {len(summary.source_paths)}</p>
 <h3>Strategy Comparison</h3>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<table>
+<thead>
 <tr><th>Name</th><th>Classification</th><th>Reason</th><th>Score</th><th>Sharpe</th><th>Win Rate</th><th>Drawdown</th><th>Sample Size</th></tr>
+</thead>
+<tbody>
 {strat_rows}
+</tbody>
 </table>
 <h3>Top Candidates (further paper testing)</h3>
 {top_html}
@@ -499,7 +530,7 @@ def render_research_insights(summary) -> str:
 {dq_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -583,8 +614,7 @@ def render_paper_runtime(session) -> str:
     if session.risk_warnings:
         risk_html += f"<p>Count: {len(session.risk_warnings)}</p>"
         for w in session.risk_warnings[:20]:
-            risk_html += f"<li>{_esc(w)}</li>"
-        risk_html += "</ul>"
+            risk_html += f"<p>{_esc(w)}</p>"
     else:
         risk_html = "<p>None</p>"
 
@@ -594,7 +624,7 @@ def render_paper_runtime(session) -> str:
         outputs_html += f"<p>Count: {len(session.generated_outputs)}</p>"
         outputs_html += "<ul>"
         for p in session.generated_outputs[:20]:
-            outputs_html += f"<li><code>{_esc(p)}</code></li>"
+            outputs_html += f'<li><code>{_esc(p)}</code></li>'
         outputs_html += "</ul>"
         if len(session.generated_outputs) > 20:
             outputs_html += f"<p>... and {len(session.generated_outputs) - 20} more</p>"
@@ -618,7 +648,7 @@ def render_paper_runtime(session) -> str:
         blockers_html += f"<p>Count: {len(session.blockers)}</p>"
         blockers_html += "<ul>"
         for b in session.blockers:
-            blockers_html += f"<li><b>{_esc(b)}</b></li>"
+            blockers_html += f'<li><b>{_esc(b)}</b></li>'
         blockers_html += "</ul>"
     else:
         blockers_html = "<p>None</p>"
@@ -628,7 +658,7 @@ def render_paper_runtime(session) -> str:
     if session.next_safe_commands:
         commands_html += "<ul>"
         for cmd in session.next_safe_commands:
-            commands_html += f"<li><code>{_esc(cmd)}</code></li>"
+            commands_html += f'<li><code>{_esc(cmd)}</code></li>'
         commands_html += "</ul>"
     else:
         commands_html = "<p>None</p>"
@@ -641,7 +671,7 @@ def render_paper_runtime(session) -> str:
 <p>Generated: {_esc(session.generated_at or "N/A")}</p>
 <p>Paper-only: {_esc(session.paper_only)} | Data-only: {_esc(session.data_only)} | No order submission: {_esc(session.no_order_submission)}</p>
 <h3>Workflow Status</h3>
-<p><span style="color:{wf_color}">{_esc(wf_status)}</span></p>
+<p style="color:{wf_color}">{_esc(wf_status)}</p>
 <p>Steps: {len(session.workflow_steps)}</p>
 <h3>Signal Summary</h3>
 {sig_html}
@@ -663,7 +693,7 @@ def render_paper_runtime(session) -> str:
 {blockers_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -685,7 +715,7 @@ def render_data_quality(report) -> str:
             file_rows += f"""
 <tr>
 <td>{_esc(Path(s.path).name)}</td>
-<td><span style="color:{status_color}">{status_text}</span></td>
+<td>{status_text}</td>
 <td>{s.rows}</td>
 <td>{s.columns}</td>
 <td>{s.duplicate_timestamp_count}</td>
@@ -707,10 +737,10 @@ def render_data_quality(report) -> str:
         issues_html += "<ul>"
         for issue in report.issues:
             severity_color = {"info": "#06c", "warning": "#a60", "blocker": "#c00"}.get(issue.severity, "#888")
-            issues_html += f'<li><span style="color:{severity_color}">[{issue.severity.upper()}]</span> {_esc(issue.category)}: {_esc(issue.message)}' 
+            issues_html += f'<li>[{issue.severity.upper()}] {_esc(issue.category)}: {_esc(issue.message)}'
             if issue.suggested_action:
                 issues_html += f" <i>Action: {_esc(issue.suggested_action)}</i>"
-            issues_html += '</li>' 
+            issues_html += '</li>'
         issues_html += "</ul>"
     else:
         issues_html = "<p>None</p>"
@@ -732,7 +762,7 @@ def render_data_quality(report) -> str:
         blockers_html += f"<p>Count: {len(report.blockers)}</p>"
         blockers_html += "<ul>"
         for b in report.blockers:
-            blockers_html += f"<li><b>{_esc(b)}</b></li>"
+            blockers_html += f'<li><b>{_esc(b)}</b></li>'
         blockers_html += "</ul>"
     else:
         blockers_html = "<p>None</p>"
@@ -752,7 +782,7 @@ def render_data_quality(report) -> str:
     if report.generated_outputs:
         outputs_html += "<ul>"
         for p in report.generated_outputs:
-            outputs_html += f"<li><code>{_esc(p)}</code></li>"
+            outputs_html += f'<li><code>{_esc(p)}</code></li>'
         outputs_html += "</ul>"
     else:
         outputs_html = "<p>None yet</p>"
@@ -762,7 +792,7 @@ def render_data_quality(report) -> str:
     if report.next_safe_commands:
         commands_html += "<ul>"
         for cmd in report.next_safe_commands:
-            commands_html += f"<li><code>{_esc(cmd)}</code></li>"
+            commands_html += f'<li><code>{_esc(cmd)}</code></li>'
         commands_html += "</ul>"
     else:
         commands_html = "<p>None</p>"
@@ -771,8 +801,8 @@ def render_data_quality(report) -> str:
     status_color = {"OK": "#080", "WARN": "#a60", "BLOCKED": "#c00"}.get(report.status, "#888")
 
     body = f"""
-<h2>Data Quality Center</h2>
-<p>No files scanned. No local market data found yet.</p>
+<h2>Data Quality Center
+<p>No files scanned. No market data import config found yet.</p></h2>
 <p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
 <p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
 <p>Generated: {_esc(report.generated_at or "N/A")}</p>
@@ -781,13 +811,13 @@ def render_data_quality(report) -> str:
 <h3>Summary</h3>
 <p>Files scanned: {report.files_scanned}</p>
 <h3>File Reports</h3>
-<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
-<tr>
-<th>File</th><th>Status</th><th>Rows</th><th>Cols</th>
-<th>Dupes</th><th>Non-Mono</th><th>Missing Cols</th>
-<th>Zero/Neg</th><th>Invalid OHLC</th><th>Start</th><th>End</th>
-</tr>
+<table>
+<thead>
+<tr><th>File</th><th>Status</th><th>Rows</th><th>Cols</th><th>Dupes</th><th>Non-Mono</th><th>Missing Cols</th><th>Zero/Neg</th><th>Invalid OHLC</th><th>Start</th><th>End</th></tr>
+</thead>
+<tbody>
 {file_rows}
+</tbody>
 </table>
 <h3>Issues</h3>
 {issues_html}
@@ -801,10 +831,116 @@ def render_data_quality(report) -> str:
 {outputs_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/paper-broker">Paper Broker</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
 <p>No actual email send. No actual Telegram send. No cron install.</p>
 """
     return wrap_html("Data Quality", body)
+
+def render_paper_broker(report) -> str:
+    """Render paper broker readiness as an HTML page.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    # Status badge color
+    status_color = {"READY": "#080", "READY_WITH_WARNINGS": "#a60", "BLOCKED": "#c00"}.get(report.status, "#888")
+
+    # Check rows
+    check_rows = ""
+    if report.checks:
+        for c in report.checks:
+            icon = "[PASS]" if c.status == "PASS" else ("[WARN]" if c.status == "WARN" else "[BLOCKED]")
+            check_rows += f"""
+<tr>
+<td>{_esc(c.name)}</td>
+<td>{_esc(c.status)}</td>
+<td>{_esc(c.category)}</td>
+<td>{_esc(c.message)}</td>
+<td>{_esc(c.suggested_action)}</td>
+</tr>
+"""
+    else:
+        check_rows = '<tr><td colspan="5">No checks performed</td></tr>'
+
+    # Warnings
+    warnings_html = ""
+    if report.warnings:
+        warnings_html += f"<p>Count: {len(report.warnings)}</p>"
+        warnings_html += "<ul>"
+        for w in report.warnings:
+            warnings_html += f"<li>{_esc(w)}</li>"
+        warnings_html += "</ul>"
+    else:
+        warnings_html = "<p>None</p>"
+
+    # Blockers
+    blockers_html = ""
+    if report.blockers:
+        blockers_html += f"<p>Count: {len(report.blockers)}</p>"
+        blockers_html += "<ul>"
+        for b in report.blockers:
+            blockers_html += f'<li><b>{_esc(b)}</b></li>'
+        blockers_html += "</ul>"
+    else:
+        blockers_html = "<p>None</p>"
+
+    # Generated outputs
+    outputs_html = ""
+    if report.generated_outputs:
+        outputs_html += "<ul>"
+        for p in report.generated_outputs:
+            outputs_html += f'<li><code>{_esc(p)}</code></li>'
+        outputs_html += "</ul>"
+    else:
+        outputs_html = "<p>None yet</p>"
+
+    # Next safe commands
+    commands_html = ""
+    if report.next_safe_commands:
+        commands_html += "<ul>"
+        for cmd in report.next_safe_commands:
+            commands_html += f'<li><code>{_esc(cmd)}</code></li>'
+        commands_html += "</ul>"
+    else:
+        commands_html = "<p>None</p>"
+
+    # No config message
+    no_config_msg = ""
+    if not report.checks or all(c.category == "config" and c.status in ("WARN", "BLOCKED") for c in report.checks if c.name == "config_exists"):
+        no_config_msg = '<p><b>No paper broker config found yet.</b> Run the CLI tool to generate a readiness report.</p>'
+
+    body = f"""
+<h2>Paper Broker Readiness</h2>
+<p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
+<p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
+<p>Generated: {_esc(report.generated_at or "N/A")}</p>
+<p>Status: <span style="color:{status_color}">{_esc(report.status)}</span></p>
+<p>Broker: {_esc(report.broker_name or "N/A")} | Mode: {_esc(report.mode or "N/A")}</p>
+<p>Config: <code>{_esc(report.config_path or "N/A")}</code></p>
+{no_config_msg}
+<h3>Checks</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Status</th><th>Category</th><th>Message</th><th>Suggested Action</th></tr>
+</thead>
+<tbody>
+{check_rows}
+</tbody>
+</table>
+<h3>Warnings</h3>
+{warnings_html}
+<h3>Blockers</h3>
+{blockers_html}
+<h3>Generated Outputs</h3>
+{outputs_html}
+<h3>Next Safe Commands</h3>
+{commands_html}
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a></p>
+<p>Reminder: reports/logs/local outputs should not be committed.</p>
+<p>This tool does not approve or enable live trading.</p>
+<p>No broker calls. No live network. No credential prompts.</p>
+<p>No actual email send. No actual Telegram send. No cron install.</p>
+"""
+    return wrap_html("Paper Broker Readiness", body)

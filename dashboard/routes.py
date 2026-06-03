@@ -1,11 +1,12 @@
 """
-Phase 14 + 25 + 26 + 27 + 28 dashboard routes.
+Phase 14 + 25 + 26 + 27 + 28 + 29 dashboard routes.
 FastAPI router with all read-only dashboard pages.
 No live trading. No order submission. No broker calls.
 Phase 25: adds /action-center route.
 Phase 26: adds /research-insights route.
 Phase 27: adds /paper-runtime route.
 Phase 28: adds /data-quality route.
+Phase 29: adds /paper-broker route.
 """
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -36,6 +37,7 @@ from dashboard.templates import (
     render_research_insights,
     render_paper_runtime,
     render_data_quality,
+    render_paper_broker,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
@@ -201,3 +203,25 @@ def data_quality_page(request: Request) -> HTMLResponse:
 
     report = build_data_quality_report(project_root, config=config, allow_missing=True)
     return HTMLResponse(render_data_quality(report))
+
+@router.get("/paper-broker", response_class=HTMLResponse)
+def paper_broker_page(request: Request) -> HTMLResponse:
+    """Paper broker readiness page: adapter validation, config safety, connectivity simulation.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    from dashboard.data_access import get_project_root
+    from local_app.app_config import load_config
+    from paper_broker.readiness import build_paper_broker_readiness
+
+    project_root = get_project_root()
+    config_path = project_root / "examples" / "local_app_config.example.json"
+    config = {}
+    if config_path.exists():
+        try:
+            config = load_config(config_path)
+        except Exception:
+            pass
+
+    report = build_paper_broker_readiness(project_root, config=config, allow_missing=True)
+    return HTMLResponse(render_paper_broker(report))

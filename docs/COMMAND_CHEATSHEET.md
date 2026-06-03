@@ -1,7 +1,10 @@
 # Command Cheatsheet
 
+## Paper Broker Readiness (Phase 29)
+- `python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing`
+- `python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing --write-report`
+
 ## Data Quality Center (Phase 28)
-- `python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json`
 - `python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing`
 - `python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing --write-report`
 

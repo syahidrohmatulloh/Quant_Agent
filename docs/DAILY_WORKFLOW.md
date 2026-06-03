@@ -5,6 +5,42 @@
 2. Run research analytics
 3. Review signals
 
+## Paper Broker Readiness Review (Phase 29)
+
+Before running any paper testing, verify that your paper broker integration is structurally ready:
+
+```bash
+python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing
+```
+
+This shows:
+- Paper broker config validation (paper_only, data_only, no_order_submission)
+- Adapter contract validation (required paper methods, no forbidden execution methods)
+- Credential-like value detection (blocks real credentials, allows placeholders)
+- Paper connectivity simulation (local only, no network calls)
+- Broker name and mode checks
+- Warnings and blockers
+- Next safe commands
+
+To write the readiness report to disk:
+
+```bash
+python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing --write-report
+```
+
+You can also view it in the dashboard at: `http://127.0.0.1:8000/paper-broker`
+
+Paper Broker Readiness is **local-only** and **paper-only / data-only**:
+- No live trading
+- No order submission
+- Not financial advice
+- Does not approve or enable live trading
+- Does not guarantee performance
+- Does not modify files
+- Does not make network calls
+- Does not require real credentials
+- Generated outputs are local and should not be committed
+
 ## Data Quality Center Review (Phase 28)
 
 After importing data, review data quality to catch issues before running experiments:
@@ -160,6 +196,10 @@ You can also view it in the dashboard at: `http://127.0.0.1:8000/action-center`
 ## Commands
 
 ```bash
+# Paper broker readiness
+python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing
+python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing --write-report
+
 # Data quality center
 python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing
 python3 tools/show_data_quality.py --config examples/market_data_import_config.example.json --allow-missing --write-report
