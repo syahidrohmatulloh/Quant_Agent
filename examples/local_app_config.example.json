@@ -20,7 +20,8 @@
     "paper_simulator": "examples/paper_simulator_config.example.json",
     "paper_orchestration": "examples/paper_orchestration_config.example.json",
     "research_analytics": "examples/research_analytics_config.example.json",
-    "data_import": "examples/market_data_import_config.example.json"
+    "data_import": "examples/market_data_import_config.example.json",
+    "paper_broker": "examples/paper_broker_config.example.json"
   },
   "workflow": {
     "run_data_import": false,

@@ -83,16 +83,32 @@ class BacktestEngine:
             )
             self.portfolio.on_fill(fill)
             pos_key = f"{fill.symbol}_{fill.direction}"
-            self._open_positions[pos_key] = {
-                "symbol": fill.symbol,
-                "direction": fill.direction,
-                "volume": fill.volume,
-                "entry_price": fill.fill_price,
-                "commission": fill.commission,
-                "last_price": fill.fill_price,
-                "sl": signal.meta.get("sl") if signal.meta else None,
-                "tp": signal.meta.get("tp") if signal.meta else None,
-            }
+            existing = self._open_positions.get(pos_key)
+            if existing is None:
+                self._open_positions[pos_key] = {
+                    "symbol": fill.symbol,
+                    "direction": fill.direction,
+                    "volume": fill.volume,
+                    "entry_price": fill.fill_price,
+                    "commission": fill.commission,
+                    "last_price": fill.fill_price,
+                    "sl": signal.meta.get("sl") if signal.meta else None,
+                    "tp": signal.meta.get("tp") if signal.meta else None,
+                }
+            else:
+                old_volume = existing["volume"]
+                new_volume = old_volume + fill.volume
+                existing["entry_price"] = (
+                    existing["entry_price"] * old_volume + fill.fill_price * fill.volume
+                ) / new_volume
+                existing["volume"] = new_volume
+                existing["commission"] += fill.commission
+                existing["last_price"] = fill.fill_price
+                if signal.meta:
+                    if signal.meta.get("sl") is not None:
+                        existing["sl"] = signal.meta.get("sl")
+                    if signal.meta.get("tp") is not None:
+                        existing["tp"] = signal.meta.get("tp")
             self.strategy.on_fill_event(fill)
         elif signal.signal == "close":
             # close all for symbol
@@ -128,10 +144,12 @@ class BacktestEngine:
         if key in self._open_positions:
             del self._open_positions[key]
         if pos["direction"] == "buy":
-            pnl = (price - pos["entry_price"]) * pos["volume"] * 100000
+            gross_pnl = (price - pos["entry_price"]) * pos["volume"] * 100000
         else:
-            pnl = (pos["entry_price"] - price) * pos["volume"] * 100000
-        pnl -= pos["commission"]
+            gross_pnl = (pos["entry_price"] - price) * pos["volume"] * 100000
+        exit_commission = self.execution.commission_per_lot * pos["volume"]
+        total_commission = pos["commission"] + exit_commission
+        pnl = gross_pnl - total_commission
         event = PositionClosedEvent(
             timestamp=timestamp,
             symbol=pos["symbol"],
@@ -140,7 +158,7 @@ class BacktestEngine:
             entry_price=pos["entry_price"],
             exit_price=price,
             pnl=pnl,
-            commission=pos["commission"]
+            commission=total_commission
         )
         self.portfolio.on_position_closed(event)
         self.strategy.on_position_closed(event)

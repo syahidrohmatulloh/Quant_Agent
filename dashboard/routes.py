@@ -1,5 +1,5 @@
 """
-Phase 14 + 25 + 26 + 27 + 28 + 29 dashboard routes.
+Phase 14 + 25 + 26 + 27 + 28 + 29 + 30 dashboard routes.
 FastAPI router with all read-only dashboard pages.
 No live trading. No order submission. No broker calls.
 Phase 25: adds /action-center route.
@@ -7,6 +7,7 @@ Phase 26: adds /research-insights route.
 Phase 27: adds /paper-runtime route.
 Phase 28: adds /data-quality route.
 Phase 29: adds /paper-broker route.
+Phase 30: adds /release-candidate route.
 """
 from fastapi import APIRouter, Request, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -38,6 +39,7 @@ from dashboard.templates import (
     render_paper_runtime,
     render_data_quality,
     render_paper_broker,
+    render_release_candidate,
 )
 from dashboard.safety import safe_dataset_id, safe_report_id
 
@@ -225,3 +227,32 @@ def paper_broker_page(request: Request) -> HTMLResponse:
 
     report = build_paper_broker_readiness(project_root, config=config, allow_missing=True)
     return HTMLResponse(render_paper_broker(report))
+
+@router.get("/release-candidate", response_class=HTMLResponse)
+def release_candidate_page(request: Request) -> HTMLResponse:
+    """Local MVP release candidate page: final readiness checks and demo safety.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    from dashboard.data_access import get_project_root
+    from local_app.app_config import load_config
+    from release_candidate.checklist import (
+        build_release_candidate_report,
+        load_latest_release_candidate_report,
+    )
+
+    project_root = get_project_root()
+    config_path = project_root / "examples" / "local_app_config.example.json"
+    config = {}
+    if config_path.exists():
+        try:
+            config = load_config(config_path)
+        except Exception:
+            pass
+
+    # Try to load existing report first
+    report = load_latest_release_candidate_report(project_root, config=config)
+    if report is None:
+        # Build safe in-memory report
+        report = build_release_candidate_report(project_root, config=config, allow_missing=True)
+    return HTMLResponse(render_release_candidate(report))

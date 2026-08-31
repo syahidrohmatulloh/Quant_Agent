@@ -19,6 +19,26 @@ from paper_simulator.simulator_report import generate_report
 from paper_simulator.dashboard_export import export_dashboard_json
 
 
+def _parse_decision_timestamp(value: Any) -> Optional[datetime]:
+    """Parse decision timestamps and normalize to naive UTC for CSV comparison."""
+    if isinstance(value, datetime):
+        dt = value
+    else:
+        raw = str(value or "").strip()
+        if not raw:
+            return None
+        if raw.endswith("Z"):
+            raw = raw[:-1] + "+00:00"
+        try:
+            dt = datetime.fromisoformat(raw)
+        except ValueError:
+            return None
+
+    if dt.tzinfo is not None:
+        dt = dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
 class SimulatorEngine:
     """End-to-end paper portfolio simulator engine."""
 
@@ -54,9 +74,9 @@ class SimulatorEngine:
         if mode == "current_close":
             return loader.latest_close()
         elif mode == "next_close":
-            if decision_timestamp:
-                return loader.next_close(decision_timestamp)
-            return loader.latest_close()
+            if decision_timestamp is None:
+                return None
+            return loader.next_close(decision_timestamp)
         elif mode == "midpoint_close":
             latest = loader.latest_bar()
             if latest:
@@ -113,11 +133,28 @@ class SimulatorEngine:
             if sym_cfg is None:
                 self.warnings.append("No symbol config for " + intent.symbol)
                 continue
-            price = self._get_fill_price(intent.symbol)
+            decision_timestamp = _parse_decision_timestamp(intent.generated_at)
+            price = self._get_fill_price(intent.symbol, decision_timestamp)
             if price is None:
-                self.warnings.append("No price available for " + intent.symbol + "; fill skipped.")
+                self.warnings.append(
+                    "No causally valid price available for " + intent.symbol
+                    + " after decision timestamp; fill skipped."
+                )
                 continue
-            fill = simulate_fill(intent, price, sym_cfg, costs_config)
+
+            if intent.side == "FLATTEN":
+                current = self.position_book.get_position(intent.symbol, intent.timeframe)
+                if current is None or current.side == "FLAT" or current.quantity <= 0:
+                    continue
+                intent.quantity = current.quantity
+
+            fill = simulate_fill(
+                intent,
+                price,
+                sym_cfg,
+                costs_config,
+                timestamp=intent.generated_at or None,
+            )
             if fill is not None:
                 self.latest_fills.append(fill)
                 # Update position book

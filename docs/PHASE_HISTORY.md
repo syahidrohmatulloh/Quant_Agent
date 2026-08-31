@@ -250,3 +250,75 @@
 - All changes remain paper-only / data-only
 - No live trading, no order submission, no broker calls, no email/Telegram send, no cron
 - No generated outputs committed
+
+## Phase 30
+- Local MVP Release Candidate Hardening
+- Added `release_candidate/` module for final release-readiness validation
+  - `checklist.py` with `ReleaseCandidateCheck` and `ReleaseCandidateReport` dataclasses
+  - `build_release_candidate_report()` — builds readiness report from local checks
+  - `check_required_docs()` — verifies README, COMMAND_CHEATSHEET, DAILY_WORKFLOW, PHASE_HISTORY exist
+  - `check_generated_outputs_clean()` — warns on reports/, logs/, local_configs/, backups/, data/market_versions/
+  - `check_dashboard_routes_available()` — verifies all expected dashboard routes present
+  - `check_cli_tools_present()` — verifies all operator and research CLI tools exist
+  - `check_safety_phrases()` — verifies key docs contain required safety disclaimers
+  - `check_release_tags()` — reminds about git tag phase-29-clean
+  - `classify_release_candidate()` — READY | READY_WITH_WARNINGS | BLOCKED
+  - `render_release_candidate_summary()` — human-readable CLI output with safety disclaimers
+  - `write_release_candidate_report()` — writes JSON, Markdown, and dashboard latest.json
+  - `load_latest_release_candidate_report()` — loads latest report from disk
+- Added `tools/run_release_candidate_check.py` CLI tool
+  - `--config` required: path to config JSON
+  - `--allow-missing` tolerates missing optional docs/tools
+  - `--write-report` writes outputs to `reports/release_candidate/`
+  - `--smoke` runs safe py_compile smoke checks without network or credentials
+  - Validates `paper_only`, `data_only`, `no_order_submission` must be true
+  - Returns 0 for READY or READY_WITH_WARNINGS, 2 for BLOCKED, 1 for config/safety failure
+- Enhanced `dashboard/routes.py` with `/release-candidate` route
+  - Reads `examples/local_app_config.example.json`
+  - Shows release candidate report with checks, warnings, blockers, next safe commands
+  - Builds safe in-memory report if no existing report on disk
+- Enhanced `dashboard/templates.py` with `render_release_candidate()` HTML page
+  - Status badge, version label, baseline tag
+  - Checks table with name, status, category, message, suggested action
+  - Warnings, blockers, generated output cleanup reminder, next safe commands
+  - Nav links to all other dashboard pages
+  - Safety disclaimers throughout
+- Added nav links from `/`, `/operator`, `/action-center`, `/research-insights`, `/paper-runtime`, `/data-quality`, `/paper-broker` to `/release-candidate`
+- Safety wording enforced throughout:
+  - PAPER-ONLY / DATA-ONLY on every output
+  - No live trading
+  - No order submission
+  - Not financial advice
+  - Does not approve or enable live trading
+  - Does not guarantee performance
+  - No credentials required
+  - No real broker execution
+- Added tests:
+  - `tests/release_candidate/test_phase30_release_candidate.py`
+  - `tests/dashboard/test_phase30_release_candidate_dashboard.py`
+  - `tests/tools/test_phase30_release_candidate_cli.py`
+- Updated docs: DAILY_WORKFLOW, COMMAND_CHEATSHEET, PHASE_HISTORY, SAFETY_AND_LIMITATIONS, DEMO_SCRIPT
+- All changes remain paper-only / data-only
+- No live trading, no order submission, no broker calls, no email/Telegram send, no cron
+- No generated outputs committed
+- This phase is release hardening only; no new product modules added
+
+## Phase 30A
+- Quant Correctness & Reliability Hardening
+- Corrected paper-simulator exposure so contract size is applied exactly once.
+- Reworked paper position/PnL accounting so realized PnL, unrealized PnL, and transaction costs reconcile without lost or double-counted costs.
+- Made `next_close` fills causal: historical decisions require the next valid bar after the decision timestamp and no longer fall back to the latest dataset close.
+- Fixed paper neutral/flatten quantity handling.
+- Fixed backtest position lifecycle so closed positions are removed and repeated same-direction fills aggregate consistently.
+- Fixed Strategy Lab equity accounting to avoid cumulative unrealized-PnL double counting and moved commission calculation to traded notional.
+- Hardened risk input validation and projected-exposure checks.
+- Hardened `/manual/order` role enforcement to operator/admin and corrected audit actor attribution.
+- Made paper-broker safety flags and mode checks fail closed; added explicit safe `paper_broker_config.example.json`.
+- Hardened OANDA practice endpoint validation to an exact HTTPS practice hostname and removed duplicate adapter health-check implementation.
+- Added the missing `requests` runtime dependency used by HTTP transport.
+- Made audit hash chains resume across process restarts and retain full SHA-256 hashes while the validator remains compatible with legacy truncated hashes.
+- Added timeframe-aware performance annualization and a walk-forward training hook so training windows are no longer silently unused.
+- Fixed binary-class signal mapping so class `0` in a `{0,1}` model maps to SELL rather than producing a non-actionable HOLD order.
+- Added `tests/quant_correctness/test_phase30a_quant_correctness.py` with financial and safety regression invariants.
+- Added GitHub Actions CI for dependency install, source compilation, and the full pytest suite.
+- Remains PAPER-ONLY / DATA-ONLY. No live real-money trading is enabled by this phase.

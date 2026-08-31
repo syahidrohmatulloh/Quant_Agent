@@ -83,7 +83,7 @@ def validate_paper_broker_config(config: Optional[Dict[str, Any]]) -> List[Paper
         return checks
 
     # paper_only
-    if config.get("paper_only", True) is not True:
+    if config.get("paper_only") is not True:
         checks.append(PaperBrokerCheck(
             name="paper_only_flag",
             status="BLOCKED",
@@ -101,7 +101,7 @@ def validate_paper_broker_config(config: Optional[Dict[str, Any]]) -> List[Paper
         ))
 
     # data_only
-    if config.get("data_only", True) is not True:
+    if config.get("data_only") is not True:
         checks.append(PaperBrokerCheck(
             name="data_only_flag",
             status="BLOCKED",
@@ -119,7 +119,7 @@ def validate_paper_broker_config(config: Optional[Dict[str, Any]]) -> List[Paper
         ))
 
     # no_order_submission
-    if config.get("no_order_submission", True) is not True:
+    if config.get("no_order_submission") is not True:
         checks.append(PaperBrokerCheck(
             name="no_order_submission_flag",
             status="BLOCKED",
@@ -136,22 +136,23 @@ def validate_paper_broker_config(config: Optional[Dict[str, Any]]) -> List[Paper
             suggested_action="",
         ))
 
-    # live mode check
-    mode = str(config.get("mode", "")).lower()
-    if mode in ("live", "real", "production", "prod"):
+    # mode check: explicit allowlist, fail closed on missing/unknown values
+    mode = str(config.get("mode", "")).strip().lower()
+    allowed_modes = {"paper", "simulation", "practice", "demo"}
+    if mode not in allowed_modes:
         checks.append(PaperBrokerCheck(
             name="mode_check",
             status="BLOCKED",
             category="paper_mode",
-            message=f"Mode is set to '{mode}'. Live/real mode is not allowed.",
-            suggested_action="Set mode to 'paper' or 'simulation'.",
+            message=f"Mode '{mode or 'not set'}' is not explicitly allowed for paper-only readiness.",
+            suggested_action="Set mode explicitly to paper, simulation, practice, or demo.",
         ))
     else:
         checks.append(PaperBrokerCheck(
             name="mode_check",
             status="PASS",
             category="paper_mode",
-            message=f"Mode is '{mode or 'not set'}' (acceptable for paper-only).",
+            message=f"Mode is explicitly allowed: '{mode}'.",
             suggested_action="",
         ))
 
@@ -216,7 +217,7 @@ def validate_adapter_contract(adapter_or_spec: Optional[Any] = None) -> List[Pap
             ))
 
         # Check for forbidden methods
-        forbidden_methods = ["order" + "_send", "execute" + "_order", "place" + "_order", "submit" + "_order"]
+        forbidden_methods = ["order" + "_send", "execute" + "_order", "place" + "_order", "submit" + "_order", "post" + "_order"]
         found_forbidden = []
         for m in forbidden_methods:
             if m in adapter_or_spec:
@@ -267,7 +268,7 @@ def validate_adapter_contract(adapter_or_spec: Optional[Any] = None) -> List[Pap
             ))
 
         # Check for forbidden attributes
-        forbidden_methods = ["order" + "_send", "execute" + "_order", "place" + "_order", "submit" + "_order"]
+        forbidden_methods = ["order" + "_send", "execute" + "_order", "place" + "_order", "submit" + "_order", "post" + "_order"]
         found_forbidden = []
         for m in forbidden_methods:
             if hasattr(adapter_or_spec, m):
@@ -490,8 +491,8 @@ def build_paper_broker_readiness(
         report.broker_name = "unknown"
         report.mode = "unknown"
         report.next_safe_commands = [
-            "python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing",
-            "python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing --write-report",
+            "python3 tools/show_paper_broker_readiness.py --config examples/paper_broker_config.example.json --allow-missing",
+            "python3 tools/show_paper_broker_readiness.py --config examples/paper_broker_config.example.json --allow-missing --write-report",
             "python3 tools/run_local_dashboard.py --config examples/local_app_config.example.json",
         ]
         return report
@@ -534,7 +535,7 @@ def build_paper_broker_readiness(
     dashboard_cfg = resolved_config.get("dashboard", {}) if isinstance(resolved_config, dict) else {}
     host = dashboard_cfg.get("host", "127.0.0.1") if isinstance(dashboard_cfg, dict) else "127.0.0.1"
     port = dashboard_cfg.get("port", 8000) if isinstance(dashboard_cfg, dict) else 8000
-    cfg_str = "examples/local_app_config.example.json"
+    cfg_str = "examples/paper_broker_config.example.json"
     report.next_safe_commands = [
         f"python3 tools/show_paper_broker_readiness.py --config {cfg_str} --allow-missing",
         f"python3 tools/show_paper_broker_readiness.py --config {cfg_str} --allow-missing --write-report",

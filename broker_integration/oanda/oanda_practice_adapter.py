@@ -100,24 +100,3 @@ class OandaPracticeAdapter(BaseBrokerAdapter):
         if len(account_id) <= 4:
             return "****"
         return "****" + account_id[-4:]
-
-    def health_check(self):
-        import os
-        key_name = getattr(self.config, "api_key_env", None)
-        key = os.getenv(key_name) if key_name else None
-        if not key:
-            return {
-                "broker": getattr(self.config, "broker_name", "unknown"),
-                "environment": getattr(self.config, "environment", "paper"),
-                "healthy": False,
-                "reason": "missing_credentials",
-                "paper_only": True,
-            }
-        return {
-            "broker": getattr(self.config, "broker_name", "unknown"),
-            "environment": getattr(self.config, "environment", "paper"),
-            "healthy": True,
-            "reason": "ok",
-            "paper_only": True,
-        }
-

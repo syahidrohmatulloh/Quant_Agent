@@ -40,11 +40,13 @@ class OrderRequest(BaseModel):
 @app.post("/manual/order")
 async def manual_order(req: OrderRequest, token: str = Header(...)):
     role = get_role(token)
+    if role not in {"operator", "admin"}:
+        raise HTTPException(status_code=403, detail="Operator or admin role required")
     request_id = str(uuid.uuid4())
-    audit.log("manual_order_requested", request_id, "admin", role, req.dict())
+    audit.log("manual_order_requested", request_id, role, role, req.model_dump())
 
     decision = rm.evaluate(req.symbol, req.direction, req.volume)
-    audit.log("risk_decision_created", request_id, "admin", role, {
+    audit.log("risk_decision_created", request_id, role, role, {
         "risk_decision_id": decision.risk_decision_id,
         "allowed": decision.allowed
     })
@@ -78,7 +80,7 @@ async def manual_order(req: OrderRequest, token: str = Header(...)):
     }
     store.insert_order(order_record)
 
-    audit.log("order_created", request_id, "admin", role, {
+    audit.log("order_created", request_id, role, role, {
         "order_id": order_record["order_id"],
         "position_id": pid,
         "broker_order_id": oid,

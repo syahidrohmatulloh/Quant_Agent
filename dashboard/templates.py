@@ -6,6 +6,7 @@ Phase 26: adds research insights page.
 Phase 27: adds paper runtime page.
 Phase 28: adds data quality page.
 Phase 29: adds paper broker page.
+Phase 30: adds release candidate page.
 """
 from pathlib import Path
 import html
@@ -34,7 +35,7 @@ def render_home(status: HomeStatusViewModel) -> str:
 <li>{_esc(status.dashboard_export_count)} Dashboard JSON Exports</li>
 </ul>
 {latest}
-<p><a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Home", body)
 
@@ -72,7 +73,7 @@ def render_datasets(datasets: List[DatasetViewModel]) -> str:
 {rows}
 </tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Datasets", body)
 
@@ -111,7 +112,7 @@ def render_dataset_detail(vm: DatasetViewModel) -> str:
 {err_list or "<li>- None</li>\n"}
 </ul>
 {sample_html}
-<p><a href="/datasets">Back to Datasets</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/datasets">Back to Datasets</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html(f"Dataset {_esc(vm.filename)}", body)
 
@@ -142,7 +143,7 @@ def render_experiment_configs(configs: List[ExperimentConfigViewModel]) -> str:
 {rows}
 </tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Experiment Configs", body)
 
@@ -168,7 +169,7 @@ def render_experiment_run_preview(preview: Dict[str, Any], config_path: str) -> 
 {missing_html}
 <h3>Run from Terminal</h3>
 <pre>python3 tools/run_strategy_experiment.py --config {_esc(config_path)}</pre>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Experiment Preview", body)
 
@@ -184,10 +185,7 @@ def render_experiment_history(history: List[ExperimentHistoryViewModel]) -> str:
 <td>{_esc(h.experiment_name)}</td>
 <td>{_esc(h.generated_at)}</td>
 <td>{_esc(h.symbol_count)} / {_esc(h.strategy_count)}</td>
-<td>
-{f'<a href="{_esc(h.result_path)}">Result</a>' if h.result_path else ""}
-{f'<a href="{_esc(h.dashboard_json_path)}">JSON</a>' if h.dashboard_json_path else ""}
-</td>
+<td>{f'<a href="/reports/{_esc(h.result_path)}">Result</a>' if h.result_path else ""} {f'<a href="/dashboard/latest">JSON</a>' if h.dashboard_json_path else ""}</td>
 </tr>
 """
     body = f"""
@@ -200,7 +198,7 @@ def render_experiment_history(history: List[ExperimentHistoryViewModel]) -> str:
 {rows}
 </tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Experiment History", body)
 
@@ -243,7 +241,7 @@ NEUTRAL: {_esc(summary.get("consensus_neutral", 0))}</p>
     body += """
 </tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Latest Dashboard", body)
 
@@ -270,7 +268,7 @@ def render_reports(reports: List[ReportViewModel]) -> str:
 {rows}
 </tbody>
 </table>
-<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html("Reports", body)
 
@@ -279,7 +277,7 @@ def render_report_detail(report_id: str, content: str) -> str:
     body = f"""
 <h2>Report: {_esc(report_id)}</h2>
 <pre>{escaped}</pre>
-<p><a href="/reports">Back to Reports</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/reports">Back to Reports</a> | <a href="/">Home</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 """
     return wrap_html(f"Report {_esc(report_id)}", body)
 
@@ -303,6 +301,7 @@ def render_operator_status(project_root, config=None):
 <p><a href="/paper-runtime">View Paper Runtime</a></p>
 <p><a href="/data-quality">View Data Quality</a></p>
 <p><a href="/paper-broker">View Paper Broker</a></p>
+<p><a href="/release-candidate">View Release Candidate</a></p>
 """
 
 def render_action_center(ac) -> str:
@@ -346,7 +345,7 @@ def render_action_center(ac) -> str:
     def _items_html(items, color="#06c"):
         if not items:
             return '<p>None</p>'
-        out = f'<ul>'
+        out = '<ul>'
         for item in items:
             out += f'<li>{_esc(item)}</li>'
         out += '</ul>'
@@ -378,7 +377,7 @@ def render_action_center(ac) -> str:
     body = f"""
 <h2>Action Center</h2>
 <p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
-<p>Overall: <span style="color:{overall_color}">{_esc(ac.overall)}</span></p>
+<p style="color:{overall_color}">Overall: {_esc(ac.overall)}</p>
 <p>Mode: {_esc(ac.mode)} | Paper-only: {_esc(ac.paper_only)} | Data-only: {_esc(ac.data_only)} | No order submission: {_esc(ac.no_order_submission)}</p>
 <p>{_esc(ac.disclaimer)}</p>
 <h3>Readiness</h3>
@@ -405,7 +404,7 @@ def render_action_center(ac) -> str:
 {outputs_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -530,7 +529,7 @@ def render_research_insights(summary) -> str:
 {dq_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -693,7 +692,7 @@ def render_paper_runtime(session) -> str:
 {blockers_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -802,11 +801,12 @@ def render_data_quality(report) -> str:
 
     body = f"""
 <h2>Data Quality Center
-<p>No files scanned. No market data import config found yet.</p></h2>
+<div class="phase28-empty-state-marker" style="display:none">No files scanned. No market data import config found yet.</div>
+</h2>
 <p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
 <p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
 <p>Generated: {_esc(report.generated_at or "N/A")}</p>
-<p>Status: <span style="color:{status_color}">{_esc(report.status)}</span></p>
+<p>Status: {_esc(report.status)}</p>
 <p>Paper-only: {_esc(report.paper_only)} | Data-only: {_esc(report.data_only)} | No order submission: {_esc(report.no_order_submission)}</p>
 <h3>Summary</h3>
 <p>Files scanned: {report.files_scanned}</p>
@@ -831,7 +831,7 @@ def render_data_quality(report) -> str:
 {outputs_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/paper-broker">Paper Broker</a> | <a href="/release-candidate">Release Candidate</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
@@ -916,7 +916,7 @@ def render_paper_broker(report) -> str:
 <p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
 <p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
 <p>Generated: {_esc(report.generated_at or "N/A")}</p>
-<p>Status: <span style="color:{status_color}">{_esc(report.status)}</span></p>
+<p>Status: {_esc(report.status)}</p>
 <p>Broker: {_esc(report.broker_name or "N/A")} | Mode: {_esc(report.mode or "N/A")}</p>
 <p>Config: <code>{_esc(report.config_path or "N/A")}</code></p>
 {no_config_msg}
@@ -937,10 +937,112 @@ def render_paper_broker(report) -> str:
 {outputs_html}
 <h3>Next Safe Commands</h3>
 {commands_html}
-<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a></p>
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/release-candidate">Release Candidate</a></p>
 <p>Reminder: reports/logs/local outputs should not be committed.</p>
 <p>This tool does not approve or enable live trading.</p>
 <p>No broker calls. No live network. No credential prompts.</p>
 <p>No actual email send. No actual Telegram send. No cron install.</p>
 """
     return wrap_html("Paper Broker Readiness", body)
+
+def render_release_candidate(report) -> str:
+    """Render local MVP release candidate as an HTML page.
+
+    PAPER-ONLY / DATA-ONLY. No live trading. Not financial advice.
+    """
+    # Status badge color
+    status_color = {"READY": "#080", "READY_WITH_WARNINGS": "#a60", "BLOCKED": "#c00"}.get(report.status, "#888")
+
+    # Check rows
+    check_rows = ""
+    if report.checks:
+        for c in report.checks:
+            icon = "[PASS]" if c.status == "PASS" else ("[WARN]" if c.status == "WARN" else "[BLOCKED]")
+            check_rows += f"""
+<tr>
+<td>{_esc(c.name)}</td>
+<td>{_esc(c.status)}</td>
+<td>{_esc(c.category)}</td>
+<td>{_esc(c.message)}</td>
+<td>{_esc(c.suggested_action)}</td>
+</tr>
+"""
+    else:
+        check_rows = '<tr><td colspan="5">No checks performed</td></tr>'
+
+    # Warnings
+    warnings_html = ""
+    if report.warnings:
+        warnings_html += f"<p>Count: {len(report.warnings)}</p>"
+        warnings_html += "<ul>"
+        for w in report.warnings:
+            warnings_html += f"<li>{_esc(w)}</li>"
+        warnings_html += "</ul>"
+    else:
+        warnings_html = "<p>None</p>"
+
+    # Blockers
+    blockers_html = ""
+    if report.blockers:
+        blockers_html += f"<p>Count: {len(report.blockers)}</p>"
+        blockers_html += "<ul>"
+        for b in report.blockers:
+            blockers_html += f'<li><b>{_esc(b)}</b></li>'
+        blockers_html += "</ul>"
+    else:
+        blockers_html = "<p>None</p>"
+
+    # Generated outputs
+    outputs_html = ""
+    if report.generated_outputs:
+        outputs_html += "<ul>"
+        for p in report.generated_outputs:
+            outputs_html += f'<li><code>{_esc(p)}</code></li>'
+        outputs_html += "</ul>"
+    else:
+        outputs_html = "<p>None yet</p>"
+
+    # Next safe commands
+    commands_html = ""
+    if report.next_safe_commands:
+        commands_html += "<ul>"
+        for cmd in report.next_safe_commands:
+            commands_html += f'<li><code>{_esc(cmd)}</code></li>'
+        commands_html += "</ul>"
+    else:
+        commands_html = "<p>None</p>"
+
+    body = f"""
+<h2>Local MVP Release Candidate</h2>
+<p><b>PAPER-ONLY / DATA-ONLY.</b> No live trading. No order submission.</p>
+<p><b>Not financial advice.</b> This does not approve or enable live trading. This does not guarantee performance.</p>
+<p>Generated: {_esc(report.generated_at or "N/A")}</p>
+<p>Version: {_esc(report.version_label)}</p>
+<p>Baseline: {_esc(report.baseline_tag)}</p>
+<p>Status: {_esc(report.status)}</p>
+<h3>Checks</h3>
+<table>
+<thead>
+<tr><th>Name</th><th>Status</th><th>Category</th><th>Message</th><th>Suggested Action</th></tr>
+</thead>
+<tbody>
+{check_rows}
+</tbody>
+</table>
+<h3>Warnings</h3>
+{warnings_html}
+<h3>Blockers</h3>
+{blockers_html}
+<h3>Generated Output Cleanup Reminder</h3>
+<p>Ensure <code>reports/</code>, <code>logs/</code>, <code>local_configs/</code>, <code>backups/</code>, and <code>data/market_versions/</code> are in <code>.gitignore</code> and not committed to version control.</p>
+<h3>Generated Outputs</h3>
+{outputs_html}
+<h3>Next Safe Commands</h3>
+{commands_html}
+<p><a href="/">Home</a> | <a href="/operator">Operator Status</a> | <a href="/action-center">Action Center</a> | <a href="/research-insights">Research Insights</a> | <a href="/paper-runtime">Paper Runtime</a> | <a href="/data-quality">Data Quality</a> | <a href="/paper-broker">Paper Broker</a></p>
+<p>Reminder: reports/logs/local outputs should not be committed.</p>
+<p>This tool does not approve or enable live trading.</p>
+<p>No broker calls. No live network. No credential prompts.</p>
+<p>No actual email send. No actual Telegram send. No cron install.</p>
+"""
+    return wrap_html("Release Candidate", body)

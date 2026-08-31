@@ -5,13 +5,17 @@ Track positions by symbol/timeframe. Persist to local JSON. Never call broker.
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-DEFAULT_CONTRACT_SIZE = 100000.0
-
 from typing import Dict, Any, List, Optional
+
+DEFAULT_CONTRACT_SIZE = 100000.0
 
 
 class Position:
-    """Represents a simulated position."""
+    """Represents a simulated position.
+
+    realized_pnl and unrealized_pnl are gross price PnL.
+    total_costs contains all simulated transaction costs exactly once.
+    """
 
     def __init__(
         self,
@@ -103,6 +107,14 @@ class PositionBook:
     def get_position(self, symbol: str, timeframe: str) -> Optional[Position]:
         return self.positions.get(self._key(symbol, timeframe))
 
+    @staticmethod
+    def _side_from_fill(side: str) -> str:
+        if side == "BUY":
+            return "LONG"
+        if side == "SELL":
+            return "SHORT"
+        return "FLAT"
+
     def update_position(
         self,
         symbol: str,
@@ -112,26 +124,34 @@ class PositionBook:
         price: float,
         fill_cost: float,
     ) -> Position:
-        """Update position after a fill. Handles open, increase, reduce, flip, flatten."""
+        """Update position after a fill. Handles open, increase, reduce, flip, flatten.
+
+        Accounting invariant:
+        net PnL = realized_gross + unrealized_gross - total_costs.
+        """
         key = self._key(symbol, timeframe)
         now = datetime.now(timezone.utc).isoformat()
         existing = self.positions.get(key)
 
-        if existing is None or existing.side == "FLAT" or existing.quantity == 0:
-            # Open new position
-            if side == "BUY":
-                new_side = "LONG"
-            elif side == "SELL":
-                new_side = "SHORT"
-            else:
-                new_side = "FLAT"
+        side = str(side or "").upper()
+        quantity = float(quantity or 0.0)
+        price = float(price or 0.0)
+        fill_cost = float(fill_cost or 0.0)
+
+        if quantity < 0:
+            raise ValueError("quantity must be non-negative")
+        if price <= 0:
+            raise ValueError("price must be positive")
+
+        if existing is None:
+            new_side = self._side_from_fill(side)
             pos = Position(
                 symbol=symbol,
                 timeframe=timeframe,
                 side=new_side,
-                quantity=quantity,
-                average_price=price,
-                notional=quantity * price,
+                quantity=quantity if new_side != "FLAT" else 0.0,
+                average_price=price if new_side != "FLAT" else 0.0,
+                notional=(quantity * price * DEFAULT_CONTRACT_SIZE) if new_side != "FLAT" else 0.0,
                 realized_pnl=0.0,
                 unrealized_pnl=0.0,
                 total_costs=fill_cost,
@@ -141,117 +161,118 @@ class PositionBook:
             self.positions[key] = pos
             return pos
 
+        if existing.side == "FLAT" or existing.quantity == 0:
+            new_side = self._side_from_fill(side)
+            existing.side = new_side
+            existing.quantity = quantity if new_side != "FLAT" else 0.0
+            existing.average_price = price if new_side != "FLAT" else 0.0
+            existing.notional = (
+                quantity * price * DEFAULT_CONTRACT_SIZE if new_side != "FLAT" else 0.0
+            )
+            existing.unrealized_pnl = 0.0
+            existing.total_costs += fill_cost
+            if new_side != "FLAT":
+                existing.opened_at = now
+            existing.updated_at = now
+            return existing
+
         old_side = existing.side
         old_qty = existing.quantity
         old_avg = existing.average_price
 
         if side == "BUY" and old_side == "LONG":
-            # Increase long
             total_qty = old_qty + quantity
-            total_notional = old_qty * old_avg + quantity * price
-            new_avg = total_notional / total_qty if total_qty > 0 else 0.0
+            weighted_value = old_qty * old_avg + quantity * price
             existing.quantity = total_qty
-            existing.average_price = new_avg
-            existing.notional = total_notional
+            existing.average_price = weighted_value / total_qty if total_qty > 0 else 0.0
+            existing.notional = existing.quantity * existing.average_price * DEFAULT_CONTRACT_SIZE
             existing.total_costs += fill_cost
-            existing.updated_at = now
 
         elif side == "SELL" and old_side == "SHORT":
-            # Increase short
             total_qty = old_qty + quantity
-            total_notional = old_qty * old_avg + quantity * price
-            new_avg = total_notional / total_qty if total_qty > 0 else 0.0
+            weighted_value = old_qty * old_avg + quantity * price
             existing.quantity = total_qty
-            existing.average_price = new_avg
-            existing.notional = total_notional
+            existing.average_price = weighted_value / total_qty if total_qty > 0 else 0.0
+            existing.notional = existing.quantity * existing.average_price * DEFAULT_CONTRACT_SIZE
             existing.total_costs += fill_cost
-            existing.updated_at = now
 
         elif side == "SELL" and old_side == "LONG":
-            # Reduce or flip long
-            if quantity >= old_qty:
-                # Flip to short
-                realized = (price - old_avg) * old_qty * DEFAULT_CONTRACT_SIZE - fill_cost
-                existing.realized_pnl += realized
-                remaining = quantity - old_qty
-                if remaining > 0:
-                    existing.side = "SHORT"
-                    existing.quantity = remaining
-                    existing.average_price = price
-                    existing.notional = remaining * price
-                    existing.total_costs = fill_cost
+            closed_qty = min(quantity, old_qty)
+            existing.realized_pnl += (price - old_avg) * closed_qty * DEFAULT_CONTRACT_SIZE
+            existing.total_costs += fill_cost
+            remaining = quantity - old_qty
+            if remaining > 0:
+                existing.side = "SHORT"
+                existing.quantity = remaining
+                existing.average_price = price
+                existing.notional = remaining * price * DEFAULT_CONTRACT_SIZE
+                existing.unrealized_pnl = 0.0
+            else:
+                existing.quantity = old_qty - quantity
+                if existing.quantity > 0:
+                    existing.notional = existing.quantity * old_avg * DEFAULT_CONTRACT_SIZE
                 else:
                     existing.side = "FLAT"
                     existing.quantity = 0.0
                     existing.average_price = 0.0
                     existing.notional = 0.0
-                    existing.total_costs += fill_cost
-            else:
-                # Reduce long
-                realized = (price - old_avg) * quantity * DEFAULT_CONTRACT_SIZE - fill_cost
-                existing.realized_pnl += realized
-                remaining = old_qty - quantity
-                existing.quantity = remaining
-                existing.notional = remaining * old_avg
-                existing.total_costs += fill_cost
-            existing.updated_at = now
+                    existing.unrealized_pnl = 0.0
 
         elif side == "BUY" and old_side == "SHORT":
-            # Reduce or flip short
-            if quantity >= old_qty:
-                # Flip to long
-                realized = (old_avg - price) * old_qty * DEFAULT_CONTRACT_SIZE - fill_cost
-                existing.realized_pnl += realized
-                remaining = quantity - old_qty
-                if remaining > 0:
-                    existing.side = "LONG"
-                    existing.quantity = remaining
-                    existing.average_price = price
-                    existing.notional = remaining * price
-                    existing.total_costs = fill_cost
+            closed_qty = min(quantity, old_qty)
+            existing.realized_pnl += (old_avg - price) * closed_qty * DEFAULT_CONTRACT_SIZE
+            existing.total_costs += fill_cost
+            remaining = quantity - old_qty
+            if remaining > 0:
+                existing.side = "LONG"
+                existing.quantity = remaining
+                existing.average_price = price
+                existing.notional = remaining * price * DEFAULT_CONTRACT_SIZE
+                existing.unrealized_pnl = 0.0
+            else:
+                existing.quantity = old_qty - quantity
+                if existing.quantity > 0:
+                    existing.notional = existing.quantity * old_avg * DEFAULT_CONTRACT_SIZE
                 else:
                     existing.side = "FLAT"
                     existing.quantity = 0.0
                     existing.average_price = 0.0
                     existing.notional = 0.0
-                    existing.total_costs += fill_cost
-            else:
-                # Reduce short
-                realized = (old_avg - price) * quantity * DEFAULT_CONTRACT_SIZE - fill_cost
-                existing.realized_pnl += realized
-                remaining = old_qty - quantity
-                existing.quantity = remaining
-                existing.notional = remaining * old_avg
-                existing.total_costs += fill_cost
-            existing.updated_at = now
+                    existing.unrealized_pnl = 0.0
 
         elif side == "FLATTEN":
-            # Flatten position
             if old_side == "LONG":
-                realized = (price - old_avg) * old_qty * DEFAULT_CONTRACT_SIZE - fill_cost
+                existing.realized_pnl += (price - old_avg) * old_qty * DEFAULT_CONTRACT_SIZE
             elif old_side == "SHORT":
-                realized = (old_avg - price) * old_qty * DEFAULT_CONTRACT_SIZE - fill_cost
-            else:
-                realized = -fill_cost
-            existing.realized_pnl += realized
+                existing.realized_pnl += (old_avg - price) * old_qty * DEFAULT_CONTRACT_SIZE
+            existing.total_costs += fill_cost
             existing.side = "FLAT"
             existing.quantity = 0.0
             existing.average_price = 0.0
             existing.notional = 0.0
-            existing.total_costs += fill_cost
-            existing.updated_at = now
+            existing.unrealized_pnl = 0.0
 
+        else:
+            raise ValueError(f"Unsupported fill side {side!r} for position side {old_side!r}")
+
+        existing.updated_at = now
         return existing
 
     def mark_to_market(self, symbol: str, timeframe: str, latest_price: float) -> Optional[Position]:
-        """Update unrealized PnL using latest close."""
+        """Update gross unrealized PnL using latest close."""
         pos = self.positions.get(self._key(symbol, timeframe))
         if pos is None or pos.side == "FLAT" or pos.quantity == 0:
+            if pos is not None:
+                pos.unrealized_pnl = 0.0
             return pos
         if pos.side == "LONG":
-            pos.unrealized_pnl = (latest_price - pos.average_price) * pos.quantity * DEFAULT_CONTRACT_SIZE - pos.total_costs
+            pos.unrealized_pnl = (
+                (latest_price - pos.average_price) * pos.quantity * DEFAULT_CONTRACT_SIZE
+            )
         elif pos.side == "SHORT":
-            pos.unrealized_pnl = (pos.average_price - latest_price) * pos.quantity * DEFAULT_CONTRACT_SIZE - pos.total_costs
+            pos.unrealized_pnl = (
+                (pos.average_price - latest_price) * pos.quantity * DEFAULT_CONTRACT_SIZE
+            )
         pos.updated_at = datetime.now(timezone.utc).isoformat()
         return pos
 
@@ -261,7 +282,7 @@ class PositionBook:
     def flatten_all(self, price: float) -> List[Position]:
         """Flatten all positions at given price."""
         updated = []
-        for key, pos in list(self.positions.items()):
+        for pos in list(self.positions.values()):
             if pos.side != "FLAT" and pos.quantity > 0:
                 self.update_position(
                     symbol=pos.symbol,

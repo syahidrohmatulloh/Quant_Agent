@@ -5,6 +5,50 @@
 2. Run research analytics
 3. Review signals
 
+## Local MVP Release Candidate Review (Phase 30)
+
+Before demo or release tagging, run the release candidate check to verify the local MVP is safe, clean, and test-passing:
+
+```bash
+python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing
+```
+
+This shows:
+- Required documentation existence (README, COMMAND_CHEATSHEET, DAILY_WORKFLOW, PHASE_HISTORY)
+- Optional documentation warnings (SAFETY_AND_LIMITATIONS, DEMO_SCRIPT, TROUBLESHOOTING)
+- Generated output cleanup status (reports/, logs/, local_configs/, backups/, data/market_versions/)
+- Dashboard route availability (all expected routes present)
+- CLI tool presence (all operator and research tools)
+- Safety phrase verification in key docs
+- Release tag reminders
+- Warnings and blockers
+- Next safe commands
+
+To write the release candidate report to disk:
+
+```bash
+python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing --write-report
+```
+
+To run safe smoke checks (py_compile, docs validation, build report):
+
+```bash
+python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing --smoke
+```
+
+You can also view it in the dashboard at: `http://127.0.0.1:8000/release-candidate`
+
+Local MVP Release Candidate is **local-only** and **paper-only / data-only**:
+- No live trading
+- No order submission
+- Not financial advice
+- Does not approve or enable live trading
+- Does not guarantee performance
+- Does not modify files
+- Does not make network calls
+- Does not require real credentials
+- Generated outputs are local and should not be committed
+
 ## Paper Broker Readiness Review (Phase 29)
 
 Before running any paper testing, verify that your paper broker integration is structurally ready:
@@ -196,6 +240,11 @@ You can also view it in the dashboard at: `http://127.0.0.1:8000/action-center`
 ## Commands
 
 ```bash
+# Local MVP release candidate
+python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing
+python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing --write-report
+python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing --smoke
+
 # Paper broker readiness
 python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing
 python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing --write-report

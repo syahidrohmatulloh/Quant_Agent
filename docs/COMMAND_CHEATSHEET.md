@@ -1,5 +1,10 @@
 # Command Cheatsheet
 
+## Local MVP Release Candidate (Phase 30)
+- `python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing`
+- `python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing --write-report`
+- `python3 tools/run_release_candidate_check.py --config examples/local_app_config.example.json --allow-missing --smoke`
+
 ## Paper Broker Readiness (Phase 29)
 - `python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing`
 - `python3 tools/show_paper_broker_readiness.py --config examples/local_app_config.example.json --allow-missing --write-report`

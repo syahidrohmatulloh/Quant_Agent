@@ -9,6 +9,7 @@
 3. **No profitability guarantee.** Past simulated performance does not predict future results.
 4. **Not financial advice.** This is a research tool, not an investment recommendation.
 5. **Readiness gate is not live approval.** Passing the readiness audit does not authorize live trading.
+6. **Release candidate is not live approval.** Passing the release candidate check does not authorize live trading.
 
 ## Known Limitations
 
@@ -31,6 +32,12 @@ The `MetaTrader5` pip package is not available on macOS. Use the CSV workflow in
 - All analytics are historical simulation only.
 - Sharpe ratio, drawdown, and attribution are based on simulated fills.
 - No forward-testing or out-of-sample validation is performed automatically.
+
+### Release Candidate
+- The release candidate check validates local file hygiene, documentation, and safety phrases.
+- It does not perform a full security audit.
+- It does not verify external dependencies or broker sandbox connectivity.
+- Generated outputs (reports, logs, local_configs) should not be committed.
 
 ## Credential Safety
 

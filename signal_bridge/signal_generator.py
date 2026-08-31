@@ -57,7 +57,21 @@ class SignalGenerator:
                 "reason": f"Prediction failed: {pred['error']}",
                 "timestamp": datetime.now(timezone.utc).isoformat()
             }
-        signal = "buy" if pred["prediction"] == 1 else "sell" if pred["prediction"] == -1 else "hold"
+        prediction = pred["prediction"]
+        loaded_model = self.prediction_service._models.get(model_id)
+        raw_classes = getattr(loaded_model, "classes_", []) if loaded_model is not None else []
+        classes = set(raw_classes.tolist() if hasattr(raw_classes, "tolist") else raw_classes)
+        # Support both common binary conventions (0/1 and -1/1) without
+        # turning a valid class-0 prediction into a nonsensical "hold order".
+        # In an explicit three-class model (-1/0/1), class 0 remains HOLD.
+        if prediction == 1:
+            signal = "buy"
+        elif prediction == -1:
+            signal = "sell"
+        elif prediction == 0 and classes and classes.issubset({0, 1}):
+            signal = "sell"
+        else:
+            signal = "hold"
         return {
             "signal_id": str(uuid.uuid4()),
             "model_id": model_id,

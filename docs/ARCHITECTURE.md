@@ -90,3 +90,16 @@ graph LR
 - `readiness_gate/` explicitly does not approve live trading.
 - `tools/` CLI scripts print commands but do not install cron automatically.
 - `dashboard/` is read-only and hosted on localhost.
+
+## Phase 30A Correctness Boundaries
+
+The quantitative core now treats accounting correctness as a release boundary:
+
+- **Causal execution:** historical `next_close` fills require a decision timestamp and the first valid later bar; no latest-price fallback is allowed.
+- **Single-source accounting:** transaction costs are recorded once, while realized and unrealized PnL remain gross price PnL; equity reconciles from those components.
+- **Position lifecycle:** repeated fills aggregate consistently and closed positions cannot continue contributing unrealized PnL or margin.
+- **Exposure invariant:** FX contract size is applied exactly once when converting lot quantity and price to notional exposure.
+- **Fail-closed safety:** invalid risk inputs, missing paper-safety flags, unknown broker modes, and non-practice OANDA hosts are rejected.
+- **Audit continuity:** JSONL audit chains continue their sequence/hash linkage across process restarts.
+
+These boundaries must remain covered by regression tests before new execution capabilities are added.

@@ -1,0 +1,41 @@
+name: Quant_Agent CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Compile Python sources
+        run: |
+          python -m compileall -q \
+            api backtesting briefing broker_integration config core dashboard \
+            data_manager data_quality docs_tools experiment_manager live_data \
+            local_app market_data model_governance monitoring paper_broker \
+            paper_orchestration paper_runtime paper_simulator persistence \
+            portfolio_optimization readiness_gate release_candidate research \
+            research_analytics research_pipeline runtime_validation scheduler \
+            signal_bridge storage strategies strategy_lab strategy_runtime \
+            streaming tools
+
+      - name: Run test suite
+        env:
+          PYTHONDONTWRITEBYTECODE: "1"
+        run: python -m pytest tests/ -q

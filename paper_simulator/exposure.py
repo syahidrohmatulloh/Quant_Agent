@@ -2,11 +2,11 @@
 
 Risk warnings: gross/net exposure, symbol concentration, short exposure, missing data.
 """
-DEFAULT_CONTRACT_SIZE = 100000.0
-
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 from paper_simulator.position_book import PositionBook
+
+DEFAULT_CONTRACT_SIZE = 100000.0
 
 
 class ExposureReport:
@@ -54,7 +54,7 @@ def compute_exposure(
     risk_config: Dict[str, Any],
     initial_cash: float,
 ) -> ExposureReport:
-    """Compute exposure report from position book and latest prices."""
+    """Compute current FX notional exposure from open simulated positions."""
     warnings: List[str] = []
     gross = 0.0
     net = 0.0
@@ -68,12 +68,16 @@ def compute_exposure(
     max_total_gross = risk_config.get("max_total_gross_exposure", 1.0)
 
     for pos in position_book.all_positions():
+        if pos.side == "FLAT" or pos.quantity <= 0:
+            continue
+
         price = latest_prices.get(pos.symbol, 0.0)
-        if price is None or price == 0:
+        if price is None or price <= 0:
             warnings.append("No recent price data for " + pos.symbol + "; exposure may be stale.")
             continue
 
-        notional = pos.quantity * price * DEFAULT_CONTRACT_SIZE * DEFAULT_CONTRACT_SIZE
+        notional = abs(pos.quantity) * price * DEFAULT_CONTRACT_SIZE
+
         if pos.side == "LONG":
             long_exp += notional
             net += notional
@@ -82,8 +86,10 @@ def compute_exposure(
             net -= notional
             if not allow_short:
                 warnings.append("Short exposure detected for " + pos.symbol + " but allow_short is false.")
-        gross += notional
+        else:
+            continue
 
+        gross += notional
         by_symbol[pos.symbol] = by_symbol.get(pos.symbol, 0.0) + notional
         by_timeframe[pos.timeframe] = by_timeframe.get(pos.timeframe, 0.0) + notional
 

@@ -1,6 +1,7 @@
 """OANDA practice HTTP transport."""
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 
 from broker_integration.transport.http_transport import RequestsHttpTransport
 from broker_integration.transport.auth import EnvAuth
@@ -36,12 +37,13 @@ class OandaHttpTransport(RequestsHttpTransport):
         self.config = config
 
     def _validate_safety(self, config: BrokerConfig) -> None:
-        """Reject live endpoints."""
-        url = config.base_url.lower()
-        if "api-fxtrade" in url or "live" in url or "production" in url:
+        """Allow only the canonical OANDA practice HTTPS endpoint."""
+        parsed = urlparse(config.base_url)
+        hostname = (parsed.hostname or "").lower()
+        if parsed.scheme.lower() != "https" or hostname != "api-fxpractice.oanda.com":
             raise OandaLiveEndpointError(
-                f"OANDA base_url '{config.base_url}' appears to be a live endpoint. "
-                "Only practice (api-fxpractice) allowed."
+                f"OANDA base_url '{config.base_url}' is not the canonical practice endpoint. "
+                "Only https://api-fxpractice.oanda.com is allowed."
             )
         if config.environment.lower() not in ("practice", "paper", "demo"):
             raise OandaLiveEndpointError(

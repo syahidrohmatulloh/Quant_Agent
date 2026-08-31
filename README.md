@@ -2,7 +2,7 @@
 
 **Paper-Only / Data-Only Quantitative Research Assistant**
 
-> **IMPORTANT:** Quant_Agent is strictly paper-only and data-only. It does not perform live trading, does not submit real-money orders, and does not connect to broker execution. It is not financial advice and does not guarantee performance. The readiness gate explicitly does not approve or enable live trading.
+> **IMPORTANT:** Quant_Agent is strictly paper-only and data-only. It does not perform live real-money trading. Internal simulation is the default; sandbox/practice broker integrations are isolated, explicitly gated, and must never target live endpoints. It is not financial advice and does not guarantee performance. The readiness gate does not approve or enable live trading.
 
 ## Overview
 
@@ -21,15 +21,19 @@ Quant_Agent is a modular Python project for quantitative strategy research, back
 - Daily briefing generation
 - Readiness gate and safety audit
 - One-command local app launcher
+- Paper runtime/session journal, data-quality center, and research insights
+- Explicitly gated sandbox/practice broker integrations for testing only
+- Quant correctness regression checks for accounting, exposure, causality, and risk
 
 ## What Quant_Agent Does NOT Do
 
-- Live trading or real-money order submission
-- Broker execution or order sending
-- Real-time market data streaming (uses CSV files)
-- Financial advice or profitability guarantees
-- Cloud deployment (local-only by default)
-- Credential storage or secret management
+- Live real-money trading or live-endpoint order submission
+- Treat sandbox/practice execution as approval for live trading
+- Guarantee strategy profitability or provide financial advice
+- Store real credentials in source code, examples, tests, logs, or reports
+- Bypass paper-only readiness, risk, or execution gates
+
+Quant_Agent contains market-data streaming components and sandbox/practice broker adapters. External practice-order submission, where supported, is opt-in and must remain isolated from live endpoints.
 
 ## Main Capabilities by Phase
 
@@ -52,6 +56,21 @@ Quant_Agent is a modular Python project for quantitative strategy research, back
 | Phase 20 | Robust local app packaging and launcher |
 | Phase 21 | Live-readiness gate and safety audit |
 | Phase 22 | Documentation, user manual, and demo script |
+| Phase 23 | Readiness warning cleanup and execution-gate hardening |
+| Phase 24 | Operator one-command workflow |
+| Phase 25 | Operator Action Center |
+| Phase 26 | Research Insights |
+| Phase 27 | Paper Runtime session journal |
+| Phase 28 | Local Data Quality Center |
+| Phase 29 | Paper Broker readiness hardening |
+| Phase 30 | Local MVP release-candidate hardening |
+| Phase 30A | Quant correctness & reliability hardening |
+
+## Quant Correctness Baseline (Phase 30A)
+
+Phase 30A hardens numerical and safety invariants before further execution features are added. The regression suite covers exposure notional, realized/unrealized PnL and transaction costs, causal `next_close` fills, closed-position cleanup, repeated-fill aggregation, risk input validation, timeframe-aware performance annualization, audit-chain continuity, binary signal-label mapping, and paper/practice readiness boundaries.
+
+The project remains paper-only/data-only. A green release-candidate checklist is not a substitute for quantitative correctness tests.
 
 ## Quick Start
 

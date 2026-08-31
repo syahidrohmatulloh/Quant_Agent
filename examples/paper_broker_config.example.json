@@ -1,0 +1,13 @@
+{
+  "name": "local_paper_broker",
+  "paper_only": true,
+  "data_only": true,
+  "no_order_submission": true,
+  "broker_name": "paper_stub",
+  "mode": "paper",
+  "adapter": {
+    "get_account_info": "stub",
+    "get_market_data": "stub",
+    "simulate_order": "stub"
+  }
+}

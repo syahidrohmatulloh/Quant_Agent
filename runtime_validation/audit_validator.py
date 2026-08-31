@@ -68,10 +68,12 @@ class AuditRuntimeValidator:
             # Recompute hash
             payload_hash = ev.get("payload_hash", "")
             prev_hash = ev.get("previous_event_hash", "")
-            recompute = hashlib.sha256(
+            recompute_full = hashlib.sha256(
                 f"{ev.get('event_sequence')}{ev.get('event_id')}{ev.get('event_type')}{ev.get('request_id')}{ev.get('actor')}{ev.get('role')}{payload_hash}{prev_hash}{ev.get('timestamp_utc')}".encode()
-            ).hexdigest()[:16]
-            if ev.get("event_hash") != recompute:
+            ).hexdigest()
+            stored_hash = str(ev.get("event_hash", ""))
+            # Accept legacy 16-char hashes and current full SHA-256 hashes.
+            if not stored_hash or recompute_full[:len(stored_hash)] != stored_hash:
                 self.errors.append(f"Hash mismatch at event {ev.get('event_id')}")
 
     def _validate_completeness(self, events: List[Dict[str, Any]]):

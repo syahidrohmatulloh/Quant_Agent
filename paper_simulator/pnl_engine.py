@@ -3,11 +3,9 @@
 Mark-to-market using latest close from CSV. Explicitly label as simulated.
 """
 from datetime import datetime, timezone
-DEFAULT_CONTRACT_SIZE = 100000.0
+from typing import Dict, Any, List
 
-from typing import Dict, Any, List, Optional
-
-from paper_simulator.position_book import PositionBook
+from paper_simulator.position_book import PositionBook, DEFAULT_CONTRACT_SIZE
 
 
 class PnlSnapshot:
@@ -64,7 +62,7 @@ def compute_pnl(
     initial_cash: float,
     base_currency: str,
 ) -> PnlSnapshot:
-    """Compute PnL snapshot from position book and latest prices."""
+    """Compute portfolio PnL with transaction costs accounted exactly once."""
     warnings: List[str] = []
     realized = 0.0
     unrealized = 0.0
@@ -76,32 +74,29 @@ def compute_pnl(
     for pos in position_book.all_positions():
         key = pos.symbol + "_" + pos.timeframe
         price = latest_prices.get(pos.symbol)
-        if price is None:
-            warnings.append("No price data for " + pos.symbol + "; skipping mark-to-market.")
-            continue
 
-        # Mark to market
-        if pos.side == "LONG":
-            pos.unrealized_pnl = (price - pos.average_price) * pos.quantity * DEFAULT_CONTRACT_SIZE - pos.total_costs
-            notional = pos.quantity * price * DEFAULT_CONTRACT_SIZE
-            gross_exposure += notional
-            net_exposure += notional
-        elif pos.side == "SHORT":
-            pos.unrealized_pnl = (pos.average_price - price) * pos.quantity * DEFAULT_CONTRACT_SIZE - pos.total_costs
-            notional = pos.quantity * price * DEFAULT_CONTRACT_SIZE
-            gross_exposure += notional
-            net_exposure -= notional
+        if pos.side != "FLAT" and pos.quantity > 0:
+            if price is None:
+                warnings.append("No price data for " + pos.symbol + "; skipping mark-to-market.")
+            else:
+                position_book.mark_to_market(pos.symbol, pos.timeframe, price)
+                notional = abs(pos.quantity) * price * DEFAULT_CONTRACT_SIZE
+                gross_exposure += notional
+                if pos.side == "LONG":
+                    net_exposure += notional
+                elif pos.side == "SHORT":
+                    net_exposure -= notional
         else:
             pos.unrealized_pnl = 0.0
 
         realized += pos.realized_pnl
         unrealized += pos.unrealized_pnl
         total_costs += pos.total_costs
-        per_symbol[key] = pos.realized_pnl + pos.unrealized_pnl
+        per_symbol[key] = pos.realized_pnl + pos.unrealized_pnl - pos.total_costs
 
-    total_pnl = realized + unrealized
+    total_pnl = realized + unrealized - total_costs
     equity = initial_cash + total_pnl
-    cash = initial_cash - gross_exposure
+    cash = initial_cash + realized - total_costs - gross_exposure
 
     return PnlSnapshot(
         timestamp=datetime.now(timezone.utc).isoformat(),
